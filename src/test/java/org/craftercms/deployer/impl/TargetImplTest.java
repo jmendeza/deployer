@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -15,7 +15,6 @@
  */
 package org.craftercms.deployer.impl;
 
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.Executors;
@@ -49,9 +48,9 @@ public class TargetImplTest {
     @Before
     public void setUp() throws Exception {
         count = 0;
-        target = new TargetImpl(ZonedDateTime.now(), TEST_ENV, TEST_SITE_NAME, null, createConfig(), null,
+        target = new TargetImpl(TEST_ENV, TEST_SITE_NAME, null, null, createConfig(), null,
             Executors.newSingleThreadExecutor(), null, createTargetLifecycleHooksResolver(),
-            createDeploymentPipelineFactory(), false);
+            createDeploymentPipelineFactory());
     }
 
     @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,8 +17,10 @@
 
 package org.craftercms.deployer.utils.elasticsearch;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
-import org.elasticsearch.client.RestHighLevelClient;
+
+import static org.craftercms.search.elasticsearch.spring.ElasticsearchClientFactory.createClient;
 
 import static org.craftercms.search.elasticsearch.spring.ElasticsearchClientFactory.createClient;
 
@@ -101,7 +103,7 @@ public class ElasticsearchClusterConfig {
     /**
      * Returns a client matching the current configuration of the cluster
      */
-    public RestHighLevelClient buildClient() {
+    public ElasticsearchClient buildClient() {
         return createClient(urls, username, password, connectTimeout, socketTimeout ,threadCount, keepAlive);
     }
 

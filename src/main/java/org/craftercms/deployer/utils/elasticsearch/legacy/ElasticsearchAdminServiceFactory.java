@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,13 +15,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.craftercms.deployer.utils.elasticsearch;
+package org.craftercms.deployer.utils.elasticsearch.legacy;
 
 import org.craftercms.search.elasticsearch.ElasticsearchAdminService;
 import org.craftercms.search.elasticsearch.impl.ElasticsearchAdminServiceImpl;
 import org.craftercms.search.elasticsearch.impl.MultiElasticsearchAdminServiceImpl;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.core.io.Resource;
+
+import java.beans.ConstructorProperties;
 
 /**
  * Implementation of {@link AbstractElasticsearchFactory} for {@link ElasticsearchAdminService}
@@ -41,12 +43,15 @@ public class ElasticsearchAdminServiceFactory extends AbstractElasticsearchFacto
      */
     protected Resource previewMapping;
 
-    public ElasticsearchAdminServiceFactory(final ElasticsearchConfig config,
-                                            final Resource authoringMapping,
-                                            final Resource previewMapping) {
+    protected String authoringNamePattern;
+
+    @ConstructorProperties({"config", "authoringMapping", "previewMapping", "authoringNamePattern"})
+    public ElasticsearchAdminServiceFactory(ElasticsearchConfig config, Resource authoringMapping,
+                                            Resource previewMapping, String authoringNamePattern) {
         super(config);
         this.authoringMapping = authoringMapping;
         this.previewMapping = previewMapping;
+        this.authoringNamePattern = authoringNamePattern;
     }
 
     @Override
@@ -56,14 +61,17 @@ public class ElasticsearchAdminServiceFactory extends AbstractElasticsearchFacto
 
     @Override
     protected ElasticsearchAdminService doCreateSingleInstance(final RestHighLevelClient client) {
-        return new ElasticsearchAdminServiceImpl(authoringMapping, previewMapping, client, config.indexSettings);
+        return new ElasticsearchAdminServiceImpl(
+                authoringMapping, previewMapping, authoringNamePattern, config.getLocaleMapping(),
+                config.indexSettings, client);
     }
 
     @Override
     protected ElasticsearchAdminService doCreateMultiInstance(final RestHighLevelClient readClient,
                                                               final RestHighLevelClient[] writeClients) {
-        return new MultiElasticsearchAdminServiceImpl(authoringMapping, previewMapping,
-                                                      readClient, config.indexSettings, writeClients);
+        return new MultiElasticsearchAdminServiceImpl(
+                authoringMapping, previewMapping, authoringNamePattern, config.getLocaleMapping(), readClient,
+                config.indexSettings, writeClients);
     }
 
 }

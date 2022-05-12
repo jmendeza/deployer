@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -26,6 +26,7 @@ import org.craftercms.deployer.api.exceptions.DeployerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.beans.ConstructorProperties;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Properties;
@@ -56,6 +57,7 @@ public class FileBasedDeploymentEventProcessor extends AbstractMainDeploymentPro
      */
     protected String eventName;
 
+    @ConstructorProperties({"store"})
     public FileBasedDeploymentEventProcessor(DeploymentEventsStore<Properties, Path> store) {
         this.store = store;
     }

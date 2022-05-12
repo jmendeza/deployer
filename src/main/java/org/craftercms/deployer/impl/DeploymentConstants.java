@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -28,6 +28,7 @@ public abstract class DeploymentConstants {
     public static final String TARGET_SITE_NAME_CONFIG_KEY = "target.siteName";
     public static final String TARGET_LOCAL_REPO_CONFIG_KEY = "target.localRepoPath";
     public static final String TARGET_ID_CONFIG_KEY = "target.id";
+    public static final String TARGET_CONFIG_PATH_KEY = "target.configFile";
     public static final String TARGET_SCHEDULED_DEPLOYMENT_ENABLED_CONFIG_KEY = "target.deployment.scheduling.enabled";
     public static final String TARGET_SCHEDULED_DEPLOYMENT_CRON_CONFIG_KEY = "target.deployment.scheduling.cron";
     public static final String TARGET_DEPLOYMENT_PIPELINE_CONFIG_KEY = "target.deployment.pipeline";
@@ -52,6 +53,8 @@ public abstract class DeploymentConstants {
 
     public static final String REPROCESS_ALL_FILES_PARAM_NAME = "reprocess_all_files";
     public static final String LATEST_COMMIT_ID_PARAM_NAME = "latest_commit_id";
+    public static final String DEPLOYMENT_MODE_PARAM_NAME = "deployment_mode";
+    public static final String FROM_COMMIT_ID_PARAM_NAME = "from_commit_id";
 
     // Logging MDC Keys
 

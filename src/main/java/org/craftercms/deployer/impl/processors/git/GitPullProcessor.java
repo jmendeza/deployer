@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -23,6 +23,7 @@ import java.net.URISyntaxException;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.io.FileUtils;
 import org.craftercms.commons.config.ConfigurationException;
+import org.craftercms.commons.git.utils.AuthConfiguratorFactory;
 import org.craftercms.deployer.api.ChangeSet;
 import org.craftercms.deployer.api.Deployment;
 import org.craftercms.deployer.api.ProcessorExecution;
@@ -70,6 +71,10 @@ public class GitPullProcessor extends AbstractRemoteGitRepoAwareProcessor {
     // Config properties (populated on init)
 
     protected String remoteRepoName;
+
+    public GitPullProcessor(File localRepoFolder, AuthConfiguratorFactory authConfiguratorFactory) {
+        super(localRepoFolder, authConfiguratorFactory);
+    }
 
     @Override
     protected void doInit(Configuration config) throws ConfigurationException {

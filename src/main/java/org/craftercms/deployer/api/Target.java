@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -76,12 +76,6 @@ public interface Target {
     Status getStatus();
 
     /**
-     * Indicates if Crafter Search should be used instead of Elasticsearch.
-     */
-    @JsonProperty("crafter_search_enabled")
-    boolean isCrafterSearchEnabled();
-
-    /**
      * Returns the YAML configuration file of the target.
      */
     @JsonIgnore
@@ -133,12 +127,6 @@ public interface Target {
      */
     @JsonIgnore
     Collection<Deployment> getAllDeployments();
-
-    /**
-     * Indicates if the target is for authoring environment.
-     */
-    @JsonIgnore
-    boolean isEnvAuthoring();
 
     /**
      * Performs a cleanup of the local repository.

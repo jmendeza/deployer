@@ -1,9 +1,18 @@
+version: "~> 1.0"
+git:
+  depth: 1
+  quiet: true
 language: java
 jdk:
-- openjdk8
+- openjdk11
 branches:
-  except:
-  - travis
+  only:
+  - develop
+  - support/.*
+  - master
+cache:
+  directories:
+  - "$HOME/.m2"
 notifications:
   irc:
     channels:
@@ -11,12 +20,11 @@ notifications:
     use_notice: true
     skip_join: true
   slack: craftersoftware:7YiSb41ZG5rfMgiAY7Qgprc7
-env:
-  global:
-  - secure: 5N5hccJtmKUrSR0hQEn97DMGYyjvTQpu/e+J0LhQyoHPuK4v+58G1YwncAAuOaQRKz/jjCIohAaqfk/t2MGTu0z/2KL7CStqyMSCvWfPfyw4r8sul48MAuyMQZHlKK7q4BQ1lVg+I+GuI4LfAQV/KkuRVy6ROcKO1TRThSyXyMfsEPPP+oJnIVdOUEovlQi5Z7KEe0G84b1HzCUdXuxxBxZrWqacffsX4ZB2gi098kq2wI18rAl16WJwREUCCGCeaMlKG027j9ZmFvQGHO2P3nyRSQpm6TtUU8KVcB521UtSPKbzVA3vR8npFSJtzvGbL3WR9975Yb1jRPc77Bs1tnllHGcqzFtbRC283Go9G0jwdgLm1DGK906cpthqiBFsa/njiiK3j0egwFs9DcHFixl+cf2Ix5zndJRhCMga348gaR55ltzcEg9C5Txmm611JO2tAFYS8JhmAGk6wUm+aLOHdlicI6aZxcwGHSWpPY2zaMlhownOC/ivc/eiR22f6uyVImauJJOm4Mw4LyqsAvZdjHuX4MnKJlWY72mNvYje2hnTB+ajphWoPRnqQ2f1afirrMxORyXBUpykzfSdevNLLQIUq60mQHgDLkc/FYUyW0fwNuyXS+lLIbkDqD9rc0893mZuJ7P9tLw7P1kPZlI7XerP3CuxhxTuJ0MdnUY=
-  - secure: WbVWcBcLQ8VyDHA7DIXB7fmycdNKJwhxEb8ODiSFUm1d+iRI19fuYKDX/ADkWMzxX/teLZsO3QSueq7GqlpiM3zvQuxOzYpfIM8t/ht48Mm5d6EuCC0/gWXGKTj5xg1h40yilMqAbGujKZICnxqYyZL2k3FmYt0hinIJjRc61vSvD0KsM0REETdGi6VZWYmsO1176ocv9RutcyB+s0U5pj27MwFId5uCpvKvYjturkWGARNcNzOlsKC4K3FxKuUVbwKQKKR9IbkoupRdGDx9aFIWc5xUQgoLrb7LkpZB28Y7mO504zx5bRRDjvnAwbjjSN/uBBa4pN2DlvF5C2KatkX+kfVd3NlajJpWCvKGRFZxspig3IY9C/POb4R/s0uCIgndpVAbEJmwCkyTcVd9cwD0LzKhbKjOT0oV6og30j5cSzoFuwVnWHa6RyGyND4y+l1JsimIsM+bCLdyhF4h76p6Z9hSsY9/uIAt/NE4+Q4KalzWfEzXz/kTpH+Dn0dg/FtjIjyZyKjSTG0C+VNinDzD4S0xIrrevzEAZzfDuP3JfFixj6S9laeRcOTgpqQs0tBHWLHOav7s5PUftYsKy6aTU0OJj50V+fIcNpUrRCcj5irgwd+e7gBXoJO6a39PtCjxAaoy74YAJVualEtuhCTYiDrfAP4NAIBPG1zNtH0=
-before_install: git clone -b travis `git config --get remote.origin.url` target/travis
 script:
 - if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then bash -c  "mvn deploy --settings
-  target/travis/settings.xml";  fi
+  .travis-settings.xml";  fi
 - if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then bash -c "mvn clean install" ;fi
+env:
+  global:
+  - secure: GZWx7xKkSaOolymGoNO9n6qPnGwPfKA6576cUQpvMRtWQhlvVubfEX2jzry6bfDgTYNd7zm/TQXy928XD4njvxdW8nGNG02DLIgvLrE6dn+E8XziyoXRZR/naORqxWfVD9XUmIDsMv9mNBq/+QokzCaAgS1KMlyjRZS7QVN1bPfczmLWUwhKJOHHOgrvcHmBHF/a0Lfo4VZOCRCe6MjpbHzQtoXK9fV09QlCIRWE87k2lK8d9E3sNiBm7LOFJiXsvefWES3+EvRLB70MZ7E97DXR5vHFXVglaEQpwGq5qn8h0HxuLpU6kFPL5t3ggaYoVa04d4jgbUnQT0EFv2YaO1QNE8/drd9l1lVcFzuplWdlArS2puYErJSKJFyusegMKGryb7k3KyKi56khNZUUzqsRP4Rs/Hg9CUBAq7mMdQYdMCtO5Uc7G2080OB3jtFzEJo6cT54uqnAKoV1Byjo1gXp04fOTvuPquV9sb19Y7PYN2T3LaFZceVNE+ElT/dQXdqPXkDpm4AdIoGMM3N4HzOfSAbZH1IZhKpgWGK1/2QsRFOAJbGKG3eS/fc94jT02RRK7SYJh4RdrnnQdCQVvjO7naOqRmvASJAV3CPklCa/qVIKPfVc9dbYiN3y/T9QBufyTMuunmgDAu2+ZbRvaLU+eX2U5Dz/FW36yAMLVtI=
+  - secure: Bt//6NIR+dp7DpS28224C1q1/ZACSnBwn9hx0pnOuQSl35bBxboAoF3Mxfd9vNoYPwihg0yuwsK4NlRcZCo1Nbb6++5O4AI7S71gRWDbFrYI7oJlQEA5zcen/G89Co2NNJjeDWRtC+WnpJC23/o+Z9i2ZADs7RQTdrrO8mtCohXRNQ0YtZvTbLXCp9NxLOyT3FTLMMiimPRk1rFDdgR70nYRbxqxusPk1CGGty23i7LsR0nw5Vl8/utxlP1+XjZhi5h9TE81YJKzTeeJ/1EU8cjMB3V4pW5d3OXIn5PaWnrPrduY3g7By/u7JMHbXTzJzLRSJ/BckMexmM7YPtIJVdI2RfJD9AFLbfFytFi8FTaJR1bp4KEGzuTwu0PUt4T6YWtoMidXJ8a3A1/Lm7YKAqw8bNuAen9ME/g0RM6SricKXnq52DZCRw6EInieFE1PPS7prKmNV2u/6JE1Qlt/Iz0PK+0LFd4TRFD4DC4zsmQUZOEcdHzcPosIWBB8TCMtH0d3RZndHk53hlKTag261FnMLlyB5JN1062/JbPmGxhFtCN8OJhWQSS1beJ4OJ2xlqvN5sd9MyyO9L3i2QcX5vJKP+fN0PcTm47B6aq0M00Gql1Uq/uR8oHObr5RigUDngNVBnl9HxrHtnVmBMEGvm8xFArA7vyDWqW266vAuvc=

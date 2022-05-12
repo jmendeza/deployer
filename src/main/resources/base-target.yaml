@@ -10,6 +10,8 @@ target:
   # The default Engine URL
   engineUrl: http://localhost:8080
   engineManagementToken: ${deployer.main.management.engineAuthorizationToken}
+  studioUrl: http://localhost:8080/studio
+  studioManagementToken: ${deployer.main.management.studioAuthorizationToken}
   deployment:
     scheduling:
       # If scheduling of target deployments is enabled
@@ -21,6 +23,9 @@ target:
       folderPath: ${deploymentEvents.dir}
       # The pattern used to generate the name of the files
       filePattern: '%s-deployment-events.properties'
+  translation:
+    # Indicates if the translation features should be enabled for the target
+    enable: false
   search:
     # The format used for the index id
     indexIdFormat: '%s'
@@ -28,11 +33,21 @@ target:
       # Limit of words to be parsed from binary files
       limit: 10000
     elasticsearch:
-      mapping:
+      mappings:
         # JSON file containing the settings for authoring indexes
         authoring: 'classpath:crafter/elasticsearch/authoring-mapping.json'
         # JSON file containing the settings for preview indexes
         preview: 'classpath:crafter/elasticsearch/default-mapping.json'
+      authoring:
+        # Regex used to determine if an index is for authoring
+        pattern: '.+-authoring'
+      locale:
+        # Mapping of locale codes to Elasticsearch language analyzers
+        mapping:
+          en.*: english
+          es.*: spanish
+          fr.*: french
+          de.*: german
       # List of URLs for Elasticsearch
       urls:
         - http://localhost:9201
@@ -41,14 +56,6 @@ target:
           value : 3000
         - key: "index.mapping.depth.limit"
           value: 40
-    # Indicates if Solr should be used instead of Elasticsearch
-    useSolr: false
-    # The base URL of the Crafter Search server
-    serverUrl: http://localhost:8080/crafter-search
-    # The access token for the Crafter Search server
-    accessToken:
-      parameter: token
-      value: defaultAccessToken
     indexing:
       xml:
         flattening:
@@ -71,6 +78,9 @@ target:
         # The regex patterns of the XML files that should be included for indexing
         includePatterns:
           - ^/?site/.+\.xml$
+        locale:
+          # The XPath to extract the locale from the descriptor
+          xpath: '*/localeCode'
       # Configurations for fields during indexing
       field:
         name:
@@ -160,6 +170,8 @@ target:
             - video/*
             - text/x-freemarker
             - text/x-groovy
+            - text/javascript
+            - text/css
           # Look into all XML descriptors to index all binary files referenced
           metadataPathPatterns:
             - ^/(?!config).+\.xml$

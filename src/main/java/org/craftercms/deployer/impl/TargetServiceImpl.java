@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -62,7 +62,6 @@ import org.springframework.stereotype.Component;
 import org.xml.sax.InputSource;
 
 import java.io.*;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
@@ -91,24 +90,23 @@ public class TargetServiceImpl implements TargetService, ApplicationListener<App
     public static final String TARGET_ENV_MODEL_KEY = "env";
     public static final String TARGET_SITE_NAME_MODEL_KEY = "site_name";
     public static final String TARGET_ID_MODEL_KEY = "target_id";
-    public static final String TARGET_CRAFTER_SEARCH_MODEL_KEY = "use_crafter_search";
 
-    protected File targetConfigFolder;
-    protected Resource baseTargetYamlConfigResource;
-    protected Resource baseTargetYamlConfigOverrideResource;
-    protected Resource baseTargetContextResource;
-    protected Resource baseTargetContextOverrideResource;
-    protected String defaultTargetConfigTemplateName;
-    protected Handlebars targetConfigTemplateEngine;
-    protected ApplicationContext mainApplicationContext;
-    protected DeploymentPipelineFactory deploymentPipelineFactory;
-    protected TaskScheduler taskScheduler;
-    protected ExecutorService taskExecutor;
-    protected ProcessedCommitsStore processedCommitsStore;
-    protected TargetLifecycleHooksResolver targetLifecycleHooksResolver;
-    protected EncryptionAwareConfigurationReader configurationReader;
-    protected UpgradeManager<Target> upgradeManager;
-    protected Set<Target> currentTargets;
+    protected final File targetConfigFolder;
+    protected final Resource baseTargetYamlConfigResource;
+    protected final Resource baseTargetYamlConfigOverrideResource;
+    protected final Resource baseTargetContextResource;
+    protected final Resource baseTargetContextOverrideResource;
+    protected final String defaultTargetConfigTemplateName;
+    protected final Handlebars targetConfigTemplateEngine;
+    protected final ApplicationContext mainApplicationContext;
+    protected final DeploymentPipelineFactory deploymentPipelineFactory;
+    protected final TaskScheduler taskScheduler;
+    protected final ExecutorService taskExecutor;
+    protected final ProcessedCommitsStore processedCommitsStore;
+    protected final TargetLifecycleHooksResolver targetLifecycleHooksResolver;
+    protected final EncryptionAwareConfigurationReader configurationReader;
+    protected final UpgradeManager<Target> upgradeManager;
+    protected final Set<Target> currentTargets;
 
     public TargetServiceImpl(
         @Value("${deployer.main.targets.config.folderPath}") File targetConfigFolder,
@@ -179,12 +177,12 @@ public class TargetServiceImpl implements TargetService, ApplicationListener<App
     }
 
     @Override
-    public List<Target> getAllTargets() throws TargetServiceException {
+    public List<Target> getAllTargets() {
         return new ArrayList<>(currentTargets);
     }
 
     @Override
-    public boolean targetExists(String env, String siteName) throws TargetServiceException {
+    public boolean targetExists(String env, String siteName) {
         String id = TargetImpl.getId(env, siteName);
 
         return findLoadedTargetById(id) != null;
@@ -221,7 +219,7 @@ public class TargetServiceImpl implements TargetService, ApplicationListener<App
 
     @Override
     public synchronized Target createTarget(String env, String siteName, boolean replace, String templateName,
-                                            boolean useCrafterSearch, Map<String, Object> templateParams)
+                                            Map<String, Object> templateParams)
         throws TargetAlreadyExistsException,
         TargetServiceException {
         String id = TargetImpl.getId(env, siteName);
@@ -230,7 +228,7 @@ public class TargetServiceImpl implements TargetService, ApplicationListener<App
         if (!replace && configFile.exists()) {
             throw new TargetAlreadyExistsException(id, env, siteName);
         } else {
-            createConfigFromTemplate(env, siteName, id, templateName, useCrafterSearch, templateParams, configFile);
+            createConfigFromTemplate(env, siteName, id, templateName, templateParams, configFile);
         }
 
         return resolveTargetFromConfigFile(configFile, true);
@@ -276,7 +274,7 @@ public class TargetServiceImpl implements TargetService, ApplicationListener<App
         Target target = getTarget(env, siteName);
         ApplicationContext appContext = target.getApplicationContext();
         ElasticsearchAdminService adminService = appContext.getBean(ElasticsearchAdminService.class);
-        adminService.recreateIndex(target.getId(), target.isEnvAuthoring());
+        adminService.recreateIndex(target.getId());
     }
 
     protected Collection<File> getTargetConfigFiles() throws TargetServiceException {
@@ -355,15 +353,13 @@ public class TargetServiceImpl implements TargetService, ApplicationListener<App
         String env = getRequiredStringProperty(config, TARGET_ENV_CONFIG_KEY);
         String siteName = getRequiredStringProperty(config, TARGET_SITE_NAME_CONFIG_KEY);
         String targetId = TargetImpl.getId(env, siteName);
-        boolean crafterSearchEnabled = getBooleanProperty(config, TARGET_CRAFTER_SEARCH_CONFIG_KEY, false);
 
         config.setProperty(TARGET_ID_CONFIG_KEY, targetId);
+        config.setProperty(TARGET_CONFIG_PATH_KEY, configFile.toString());
 
         ConfigurableApplicationContext context = loadApplicationContext(config, contextFile);
 
-        return new TargetImpl(ZonedDateTime.now(), env, siteName, configFile, config,
-                context, taskExecutor, taskScheduler, targetLifecycleHooksResolver,
-                deploymentPipelineFactory, crafterSearchEnabled);
+        return context.getBean(TargetImpl.class);
     }
 
     protected Target loadTarget(File configFile, File contextFile, boolean create) throws TargetServiceException {
@@ -472,7 +468,7 @@ public class TargetServiceImpl implements TargetService, ApplicationListener<App
     }
 
     protected void createConfigFromTemplate(String env, String siteName, String targetId, String templateName,
-                                            boolean useCrafterSearch, Map<String, Object> templateParameters,
+                                            Map<String, Object> templateParameters,
                                             File configFile) throws TargetServiceException {
         if (StringUtils.isEmpty(templateName)) {
             templateName = defaultTargetConfigTemplateName;
@@ -482,7 +478,6 @@ public class TargetServiceImpl implements TargetService, ApplicationListener<App
         templateModel.put(TARGET_ENV_MODEL_KEY, env);
         templateModel.put(TARGET_SITE_NAME_MODEL_KEY, siteName);
         templateModel.put(TARGET_ID_MODEL_KEY, targetId);
-        templateModel.put(TARGET_CRAFTER_SEARCH_MODEL_KEY, useCrafterSearch);
 
         if (MapUtils.isNotEmpty(templateParameters)) {
             templateModel.putAll(templateParameters);

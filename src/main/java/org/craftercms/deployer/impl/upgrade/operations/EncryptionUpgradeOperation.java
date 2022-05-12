@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -17,6 +17,7 @@ package org.craftercms.deployer.impl.upgrade.operations;
 
 import org.apache.commons.io.IOUtils;
 import org.craftercms.commons.crypto.TextEncryptor;
+import org.craftercms.commons.upgrade.impl.UpgradeContext;
 import org.craftercms.commons.upgrade.impl.operations.AbstractUpgradeOperation;
 import org.craftercms.deployer.api.Target;
 
@@ -48,8 +49,8 @@ public class EncryptionUpgradeOperation extends AbstractUpgradeOperation<Target>
     }
 
     @Override
-    protected void doExecute(Target target) throws Exception {
-        File file = target.getConfigurationFile();
+    protected void doExecute(UpgradeContext<Target> context) throws Exception {
+        File file = context.getTarget().getConfigurationFile();
 
         String content;
         try (Reader reader = new FileReader(file)) {

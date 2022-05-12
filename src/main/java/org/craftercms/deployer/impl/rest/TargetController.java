@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -28,9 +28,9 @@ import org.craftercms.deployer.api.DeploymentService;
 import org.craftercms.deployer.api.Target;
 import org.craftercms.deployer.api.TargetService;
 import org.craftercms.deployer.api.exceptions.DeployerException;
-import org.craftercms.deployer.api.exceptions.TargetAlreadyExistsException;
 import org.craftercms.deployer.api.exceptions.TargetNotFoundException;
 import org.craftercms.deployer.api.exceptions.TargetServiceException;
+import org.craftercms.deployer.api.exceptions.UnsupportedSearchEngineException;
 import org.craftercms.deployer.utils.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -83,6 +83,7 @@ public class TargetController {
     public static final String TEMPLATE_NAME_PARAM_NAME = "template_name";
     public static final String SEARCH_ENGINE_PARAM_NAME = "search_engine";
     public static final String SEARCH_ENGINE_PARAM_VALUE = "CrafterSearch";
+    public static final String USE_CRAFTER_SEARCH_PARAM_NAME = "use_crafter_search";
 
     protected TargetService targetService;
     protected DeploymentService deploymentService;
@@ -349,12 +350,11 @@ public class TargetController {
     }
 
     protected ResponseEntity<Result> createTarget(Map<String, Object> params, boolean createIfNotExists)
-            throws ValidationException, TargetServiceException, TargetAlreadyExistsException {
+            throws ValidationException, DeployerException {
         String env = "";
         String siteName = "";
         boolean replace = false;
         String templateName = "";
-        boolean crafterSearchEnabled = false;
         Map<String, Object> templateParams = new HashMap<>();
 
         for (Map.Entry<String, Object> param : params.entrySet()) {
@@ -372,8 +372,12 @@ public class TargetController {
                     templateName = param.getValue().toString();
                     break;
                 case SEARCH_ENGINE_PARAM_NAME:
-                    crafterSearchEnabled = SEARCH_ENGINE_PARAM_VALUE.equals(param.getValue());
+                    if(SEARCH_ENGINE_PARAM_VALUE.equals(param.getValue())) {
+                        throw UnsupportedSearchEngineException.CRAFTER_SEARCH;
+                    }
                     break;
+                case USE_CRAFTER_SEARCH_PARAM_NAME:
+                    throw UnsupportedSearchEngineException.CRAFTER_SEARCH;
                 default:
                     templateParams.put(param.getKey(), param.getValue());
                     break;
@@ -394,10 +398,10 @@ public class TargetController {
 
         if (createIfNotExists) {
             if (!targetService.targetExists(env, siteName)) {
-                targetService.createTarget(env, siteName, false, templateName, crafterSearchEnabled, templateParams);
+                targetService.createTarget(env, siteName, false, templateName, templateParams);
             }
         } else {
-            targetService.createTarget(env, siteName, replace, templateName, crafterSearchEnabled, templateParams);
+            targetService.createTarget(env, siteName, replace, templateName, templateParams);
         }
 
         return new ResponseEntity<>(Result.OK,

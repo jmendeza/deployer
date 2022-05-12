@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -25,6 +25,7 @@ import org.craftercms.deployer.api.ProcessorExecution;
 import org.craftercms.deployer.api.exceptions.DeployerException;
 import org.craftercms.deployer.impl.ProcessedCommitsStore;
 import org.craftercms.deployer.impl.processors.AbstractMainDeploymentProcessor;
+import org.craftercms.deployer.impl.processors.elasticsearch.ElasticsearchIndexingProcessor;
 import org.craftercms.deployer.utils.GitUtils;
 import org.craftercms.search.batch.UpdateDetail;
 import org.eclipse.jgit.api.Git;
@@ -34,13 +35,7 @@ import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
-import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevTree;
-import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.treewalk.AbstractTreeIterator;
-import org.eclipse.jgit.treewalk.CanonicalTreeParser;
-import org.eclipse.jgit.treewalk.EmptyTreeIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Required;
@@ -48,10 +43,15 @@ import org.springframework.beans.factory.annotation.Required;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
+import static org.craftercms.deployer.impl.DeploymentConstants.FROM_COMMIT_ID_PARAM_NAME;
 import static org.craftercms.deployer.impl.DeploymentConstants.LATEST_COMMIT_ID_PARAM_NAME;
 import static org.craftercms.deployer.impl.DeploymentConstants.REPROCESS_ALL_FILES_PARAM_NAME;
 
@@ -59,7 +59,7 @@ import static org.craftercms.deployer.impl.DeploymentConstants.REPROCESS_ALL_FIL
  * Processor that, based on a previous processed commit that's stored, does a diff with the current commit of the deployment, to
  * find out the change set. If there is no previous processed commit, then the entire repository becomes the change set. This processor
  * is used basically to create the change set and should be used before other processors that actually process the change set, like
- * {@link SearchIndexingProcessor}.
+ * {@link ElasticsearchIndexingProcessor}.
  *
  * @author avasquez
  */
@@ -117,6 +117,11 @@ public class GitDiffProcessor extends AbstractMainDeploymentProcessor {
     }
 
     @Override
+    public boolean supportsMode(Deployment.Mode mode) {
+        return mode == Deployment.Mode.PUBLISH || mode == Deployment.Mode.SEARCH_INDEX;
+    }
+
+    @Override
     protected boolean shouldExecute(Deployment deployment, ChangeSet filteredChangeSet) {
         // Run if the deployment is running
         return deployment.isRunning();
@@ -125,15 +130,27 @@ public class GitDiffProcessor extends AbstractMainDeploymentProcessor {
     @Override
     protected ChangeSet doMainProcess(Deployment deployment, ProcessorExecution execution,
                                       ChangeSet filteredChangeSet, ChangeSet originalChangeSet) throws DeployerException {
+        boolean regularPublish = deployment.getMode() == Deployment.Mode.PUBLISH;
+        ObjectId fromCommitId = getFromCommitIdParam(deployment);
         boolean reprocessAllFiles = getReprocessAllFilesParam(deployment);
-        if (reprocessAllFiles) {
-            processedCommitsStore.delete(targetId);
+
+        if (fromCommitId == null && reprocessAllFiles) {
+            if (regularPublish) {
+                processedCommitsStore.delete(targetId);
+            }
 
             logger.info("All files from local repo {} will be reprocessed", localRepoFolder);
         }
 
         try (Git git = openLocalRepository()) {
-            ObjectId previousCommitId = processedCommitsStore.load(targetId);
+            ObjectId previousCommitId = null;
+            if (fromCommitId == null) {
+                if (!reprocessAllFiles) {
+                    previousCommitId = processedCommitsStore.load(targetId);
+                }
+            } else {
+                previousCommitId = fromCommitId;
+            }
             ObjectId latestCommitId = getLatestCommitId(git);
 
             ChangeSet changeSet = resolveChangeSetFromCommits(git, previousCommitId, latestCommitId);
@@ -150,7 +167,7 @@ public class GitDiffProcessor extends AbstractMainDeploymentProcessor {
             // Make the new commit id available for other processors
             deployment.addParam(LATEST_COMMIT_ID_PARAM_NAME, latestCommitId);
 
-            if (updateCommitStore) {
+            if (updateCommitStore && regularPublish) {
                 processedCommitsStore.store(targetId, latestCommitId);
             }
 
@@ -179,7 +196,7 @@ public class GitDiffProcessor extends AbstractMainDeploymentProcessor {
 
                 try (ObjectReader reader = git.getRepository().newObjectReader()) {
                     RevCommit parent = commit.getParentCount() > 0? commit.getParent(0) : null;
-                    List<DiffEntry> diff = doDiff(git, reader, parent, commit);
+                    List<DiffEntry> diff = GitUtils.doDiff(git, reader, parent, commit);
 
                     diff.forEach(entry -> {
                         if(entry.getChangeType() != DiffEntry.ChangeType.DELETE) {
@@ -223,45 +240,15 @@ public class GitDiffProcessor extends AbstractMainDeploymentProcessor {
             logger.info("Calculating change set from commits: {} -> {}", fromCommitIdStr, toCommitIdStr);
 
             try (ObjectReader reader = git.getRepository().newObjectReader()) {
-                return processDiffEntries(doDiff(git, reader, fromCommitId, toCommitId));
+                return processDiffEntries(GitUtils.doDiff(git, reader, fromCommitId, toCommitId));
             } catch (IOException | GitAPIException e) {
                 throw new DeployerException("Failed to calculate change set from commits: " + fromCommitIdStr +
                                             " -> " + toCommitIdStr, e);
             }
         } else {
-            logger.info("Commits are the same. No change set will be calculated", fromCommitIdStr, toCommitIdStr);
+            logger.info("Commits are the same. No change set will be calculated");
 
             return null;
-        }
-    }
-
-    protected List<DiffEntry> doDiff(Git git, ObjectReader reader, ObjectId fromCommitId,
-                                     ObjectId toCommitId) throws IOException, GitAPIException {
-        AbstractTreeIterator fromTreeIter = getTreeIteratorForCommit(git, reader, fromCommitId);
-        AbstractTreeIterator toTreeIter = getTreeIteratorForCommit(git, reader, toCommitId);
-
-        return git.diff().setOldTree(fromTreeIter).setNewTree(toTreeIter).call();
-    }
-
-    protected AbstractTreeIterator getTreeIteratorForCommit(Git git, ObjectReader reader,
-                                                            ObjectId commitId) throws IOException {
-        if (commitId != null) {
-            RevTree tree = getTreeForCommit(git.getRepository(), commitId);
-            CanonicalTreeParser treeParser = new CanonicalTreeParser();
-
-            treeParser.reset(reader, tree.getId());
-
-            return treeParser;
-        } else {
-            return new EmptyTreeIterator();
-        }
-    }
-
-    protected RevTree getTreeForCommit(Repository repo, ObjectId commitId) throws IOException  {
-        try (RevWalk revWalk = new RevWalk(repo)) {
-            RevCommit commit = revWalk.parseCommit(commitId);
-
-            return commit.getTree();
         }
     }
 
@@ -333,6 +320,15 @@ public class GitDiffProcessor extends AbstractMainDeploymentProcessor {
         } else {
             return false;
         }
+    }
+
+    protected ObjectId getFromCommitIdParam(Deployment deployment) {
+        ObjectId objectId = null;
+        Object value = deployment.getParam(FROM_COMMIT_ID_PARAM_NAME);
+        if (value != null) {
+            objectId = ObjectId.fromString((String) value);
+        }
+        return objectId;
     }
 
 }

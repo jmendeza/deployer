@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -15,8 +15,7 @@
  */
 package org.craftercms.deployer.impl.upgrade.operations;
 
-import org.apache.commons.configuration2.HierarchicalConfiguration;
-import org.craftercms.commons.config.ConfigurationException;
+import org.craftercms.commons.upgrade.impl.UpgradeContext;
 import org.craftercms.commons.config.DisableClassLoadingConstructor;
 import org.craftercms.commons.upgrade.impl.operations.AbstractUpgradeOperation;
 import org.craftercms.deployer.api.Target;
@@ -30,8 +29,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-
-import static org.craftercms.commons.config.ConfigUtils.getRequiredStringProperty;
 
 /**
  * Base class for all {@link org.craftercms.commons.upgrade.UpgradeOperation}s that handle target configurations
@@ -47,6 +44,9 @@ public abstract class AbstractTargetUpgradeOperation extends AbstractUpgradeOper
     public static final String CONFIG_KEY_PROPERTY = "property";
     public static final String CONFIG_KEY_PATTERN = "pattern";
     public static final String CONFIG_KEY_EXPRESSION = "expression";
+    public static final String CONFIG_KEY_ADD = "add";
+    public static final String CONFIG_KEY_VALUE = "value";
+    public static final String CONFIG_KEY_VALUES = "values";
 
     public static final String CONFIG_KEY_TARGET = "target";
     public static final String CONFIG_KEY_DEPLOYMENT = "deployment";
@@ -54,11 +54,6 @@ public abstract class AbstractTargetUpgradeOperation extends AbstractUpgradeOper
     public static final String CONFIG_KEY_PROCESSOR_NAME = "processorName";
     public static final String CONFIG_KEY_LIFECYCLE_HOOKS = "lifecycleHooks";
     public static final String CONFIG_KEY_HOOK_NAME = "hookName";
-
-    /**
-     * The name of the processor to update
-     */
-    protected String processorName;
 
     protected Yaml yaml;
 
@@ -69,14 +64,6 @@ public abstract class AbstractTargetUpgradeOperation extends AbstractUpgradeOper
         yaml = new Yaml(new DisableClassLoadingConstructor(), new Representer(), options);
     }
 
-    @Override
-    public void init(String currentVersion, String nextVersion, HierarchicalConfiguration config)
-            throws ConfigurationException {
-        processorName = getRequiredStringProperty(config, CONFIG_KEY_PROCESSOR);
-
-        super.init(currentVersion, nextVersion, config);
-    }
-
     @SuppressWarnings("unchecked")
     protected List<Map<String, Object>> getPipeline(Map<String, Object> targetConfig) {
         Map<String, Object> targetObj = (Map<String, Object>)targetConfig.get(CONFIG_KEY_TARGET);
@@ -85,7 +72,8 @@ public abstract class AbstractTargetUpgradeOperation extends AbstractUpgradeOper
     }
 
     @Override
-    protected void doExecute(Target target) throws Exception {
+    protected void doExecute(UpgradeContext<Target> context) throws Exception {
+        var target = context.getTarget();
         Path file = target.getConfigurationFile().toPath();
         Map<String, Object> targetConfig;
 

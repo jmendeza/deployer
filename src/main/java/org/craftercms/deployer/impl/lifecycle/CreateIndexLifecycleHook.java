@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -18,7 +18,7 @@ package org.craftercms.deployer.impl.lifecycle;
 import org.craftercms.deployer.api.Target;
 import org.craftercms.deployer.api.exceptions.DeployerException;
 import org.craftercms.deployer.api.lifecycle.TargetLifecycleHook;
-import org.craftercms.search.exception.SearchException;
+import org.craftercms.search.commons.exception.SearchException;
 
 /**
  * Implementation of {@link TargetLifecycleHook} that creates an Elasticsearch index or a Crafter Search
@@ -31,15 +31,9 @@ public class CreateIndexLifecycleHook extends AbstractIndexAwareLifecycleHook {
     @Override
     public void doExecute(Target target) throws DeployerException {
         try {
-            if (target.isCrafterSearchEnabled()) {
-                logger.info("Creating Crafter Search based index for target '{}'", target.getId());
+            logger.info("Creating Elasticsearch index for target '{}'", target.getId());
 
-                crafterSearchAdminService.createIndex(indexId);
-            } else {
-                logger.info("Creating Elasticsearch index for target '{}'", target.getId());
-
-                elasticsearchAdminService.createIndex(indexId, target.isEnvAuthoring());
-            }
+            elasticsearchAdminService.createIndex(indexId);
         } catch (SearchException e) {
             throw new DeployerException("Error creating index for target '" + target.getId() + "'", e);
         }

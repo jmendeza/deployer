@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,10 +17,12 @@
 
 package org.craftercms.deployer.utils.elasticsearch;
 
+import java.beans.ConstructorProperties;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -37,9 +39,17 @@ public class ElasticsearchConfig {
 
     public static final String CONFIG_KEY_GLOBAL_CLUSTER = "target.search.elasticsearch";
 
-    public static final String CONFIG_KEY_READ_CLUSTER = "target.search.elasticsearch.readCluster";
+    public static final String CONFIG_KEY_READ_CLUSTER = CONFIG_KEY_GLOBAL_CLUSTER + ".readCluster";
 
-    public static final String CONFIG_KEY_WRITE_CLUSTERS = "target.search.elasticsearch.writeClusters";
+    public static final String CONFIG_KEY_WRITE_CLUSTERS = CONFIG_KEY_GLOBAL_CLUSTER + ".writeClusters";
+
+    public static final String CONFIG_KEY_LOCALE_MAPPING = CONFIG_KEY_GLOBAL_CLUSTER + ".locale.mapping";
+
+    public static final String CONFIG_KEY_INDEX_SETTINGS = "target.search.elasticsearch.indexSettings";
+
+    public static final String CONFIG_KEY_KEY = "key";
+
+    public static final String CONFIG_KEY_VALUE = "value";
 
     public static final String CONFIG_KEY_INDEX_SETTINGS = "target.search.elasticsearch.indexSettings";
 
@@ -62,8 +72,14 @@ public class ElasticsearchConfig {
      */
     public final List<ElasticsearchClusterConfig> writeClusters;
 
+    /**
+     * Mapping of locale codes to Elasticsearch language analyzers
+     */
+    public final Map<String, String> localeMapping = new HashMap<>();
+
     public final Map<String, String> indexSettings;
 
+    @ConstructorProperties({"config"})
     public ElasticsearchConfig(HierarchicalConfiguration<?> config) {
         if (!isEmpty(config.childConfigurationsAt(CONFIG_KEY_GLOBAL_CLUSTER))) {
             globalCluster = new ElasticsearchClusterConfig(config.configurationAt(CONFIG_KEY_GLOBAL_CLUSTER));
@@ -87,6 +103,9 @@ public class ElasticsearchConfig {
             throw new IllegalStateException("Invalid Elasticsearch configuration");
         }
 
+        Configuration mapping = config.configurationAt(CONFIG_KEY_LOCALE_MAPPING);
+        mapping.getKeys().forEachRemaining(key -> localeMapping.put(key, mapping.getString(key)));
+
         indexSettings = new HashMap<>();
         config.configurationsAt(CONFIG_KEY_INDEX_SETTINGS).forEach(settingConfig ->
                 indexSettings.put(settingConfig.getString(CONFIG_KEY_KEY), settingConfig.getString(CONFIG_KEY_VALUE)));
@@ -97,6 +116,10 @@ public class ElasticsearchConfig {
      */
     public boolean useSingleCluster() {
         return ArrayUtils.isEmpty(readCluster.urls) || isEmpty(writeClusters);
+    }
+
+    public Map<String, String> getLocaleMapping() {
+        return localeMapping;
     }
 
 }

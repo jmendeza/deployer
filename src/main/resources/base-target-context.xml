@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+  ~ Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License version 3 as published by
@@ -26,6 +26,9 @@
     <context:annotation-config/>
     <context:property-placeholder/>
 
+    <!-- Target -->
+    <bean id="target" class="org.craftercms.deployer.impl.TargetImpl"/>
+
     <!-- Lifecycle hooks -->
 
     <!--
@@ -36,7 +39,6 @@
           scope="prototype">
         <property name="siteName" value="${target.siteName}"/>
         <property name="indexIdFormat" value="${target.search.indexIdFormat}"/>
-        <property name="crafterSearchAdminService" ref="searchAdminService"/>
         <property name="elasticsearchAdminService" ref="elasticsearchAdminService"/>
     </bean>
 
@@ -44,7 +46,6 @@
           scope="prototype">
         <property name="siteName" value="${target.siteName}"/>
         <property name="indexIdFormat" value="${target.search.indexIdFormat}"/>
-        <property name="crafterSearchAdminService" ref="searchAdminService"/>
         <property name="elasticsearchAdminService" ref="elasticsearchAdminService"/>
     </bean>
 
@@ -86,17 +87,17 @@
 
     <bean id="scriptProcessor" parent="deploymentProcessor" lazy-init="true"
           class="org.craftercms.deployer.impl.processors.ScriptProcessor">
-        <constructor-arg ref="scriptEngine"/>
-        <constructor-arg ref="sandboxInterceptor"/>
+        <constructor-arg name="scriptEngine" ref="scriptEngine"/>
+        <constructor-arg name="sandboxInterceptor" ref="sandboxInterceptor"/>
     </bean>
 
     <bean id="scriptEngine" class="org.craftercms.deployer.utils.scripting.ScriptEngineFactory" lazy-init="true">
-        <constructor-arg value="${deployer.main.scripting.classpath}"/>
-        <constructor-arg value="${deployer.main.scripting.sandbox.enabled}"/>
+        <constructor-arg name="urls" value="${deployer.main.scripting.classpath}"/>
+        <constructor-arg name="sandboxEnabled" value="${deployer.main.scripting.sandbox.enabled}"/>
     </bean>
 
     <bean id="sandboxInterceptor" lazy-init="true"
-          class="org.craftercms.deployer.utils.scripting.SandboxInterceptorFactory">
+          class="org.craftercms.commons.spring.groovy.SandboxInterceptorFactory">
         <constructor-arg name="sandboxEnabled" value="${deployer.main.scripting.sandbox.enabled}"/>
         <constructor-arg name="blacklistEnabled" value="${deployer.main.scripting.sandbox.blacklist.enabled}"/>
         <constructor-arg name="blacklist" value="${deployer.main.scripting.sandbox.blacklist.path}"/>
@@ -104,12 +105,14 @@
 
     <bean id="gitPullProcessor" parent="deploymentProcessor"
           class="org.craftercms.deployer.impl.processors.git.GitPullProcessor" >
-        <property name="localRepoFolder" value="${target.localRepoPath}"/>
+        <constructor-arg name="localRepoFolder" value="${target.localRepoPath}"/>
+        <constructor-arg name="authConfiguratorFactory" ref="gitAuthenticationConfiguratorFactory"/>
     </bean>
 
     <bean id="gitPushProcessor" parent="deploymentProcessor"
           class="org.craftercms.deployer.impl.processors.git.GitPushProcessor">
-        <property name="localRepoFolder" value="${target.localRepoPath}"/>
+        <constructor-arg name="localRepoFolder" value="${target.localRepoPath}"/>
+        <constructor-arg name="authConfiguratorFactory" ref="gitAuthenticationConfiguratorFactory"/>
     </bean>
 
     <bean id="gitDiffProcessor" parent="deploymentProcessor"
@@ -121,7 +124,7 @@
 
     <bean id="gitUpdateCommitIdProcessor" parent="deploymentProcessor"
           class="org.craftercms.deployer.impl.processors.git.GitUpdateCommitIdProcessor">
-        <constructor-arg ref="processedCommitsStore"/>
+        <constructor-arg name="processedCommitsStore" ref="processedCommitsStore"/>
     </bean>
 
     <bean id="abstractSearchIndexingProcessor" class="org.craftercms.deployer.impl.processors.AbstractSearchIndexingProcessor"
@@ -131,19 +134,6 @@
         <property name="contentStoreService" ref="crafter.contentStoreService"/>
         <property name="xmlFlatteningEnabled" value="${target.search.indexing.xml.flattening.enabled}"/>
         <property name="indexIdFormat" value="${target.search.indexIdFormat}"/>
-    </bean>
-
-    <bean id="searchIndexingProcessor" class="org.craftercms.deployer.impl.processors.SearchIndexingProcessor"
-          parent="abstractSearchIndexingProcessor">
-        <constructor-arg ref="searchService"/>
-        <constructor-arg ref="searchAdminService"/>
-        <property name="batchIndexers">
-            <list>
-                <ref bean="xmlFileBatchIndexer"/>
-                <ref bean="binaryFileBatchIndexer"/>
-                <ref bean="binaryFileWithMetadataBatchIndexer"/>
-            </list>
-        </property>
     </bean>
 
     <bean id="httpMethodCallProcessor" class="org.craftercms.deployer.impl.processors.HttpMethodCallProcessor"
@@ -170,37 +160,37 @@
     <!-- Configuration Profiles -->
 
 	<bean id="configurationProvider" class="org.craftercms.deployer.utils.config.profiles.ConfigurationProviderImpl">
-		<constructor-arg ref="contextFactory"/>
-		<constructor-arg ref="crafter.contentStoreService"/>
+		<constructor-arg name="contextFactory" ref="contextFactory"/>
+		<constructor-arg name="contentStoreService" ref="crafter.contentStoreService"/>
 	</bean>
 
     <bean id="s3ProfileLoader" class="org.craftercms.deployer.utils.config.profiles.ConfigurationProfileLoaderImpl">
-		<constructor-arg value="${target.config.profiles.aws.module}"/>
-		<constructor-arg value="${target.config.profiles.aws.path}"/>
-        <constructor-arg ref="crafter.s3ProfileMapper"/>
-		<constructor-arg ref="configurationProvider"/>
+		<constructor-arg name="profilesModule" value="${target.config.profiles.aws.module}"/>
+		<constructor-arg name="profilesUrl" value="${target.config.profiles.aws.path}"/>
+        <constructor-arg name="profileMapper" ref="crafter.s3ProfileMapper"/>
+		<constructor-arg name="configurationProvider" ref="configurationProvider"/>
     </bean>
 
     <bean id="boxProfileLoader" class="org.craftercms.deployer.utils.config.profiles.ConfigurationProfileLoaderImpl">
-		<constructor-arg value="${target.config.profiles.box.module}"/>
-		<constructor-arg value="${target.config.profiles.box.path}"/>
-        <constructor-arg>
+		<constructor-arg name="profilesModule" value="${target.config.profiles.box.module}"/>
+		<constructor-arg name="profilesUrl" value="${target.config.profiles.box.path}"/>
+        <constructor-arg name="profileMapper">
             <bean class="org.craftercms.commons.config.profiles.box.BoxProfileMapper">
-                <constructor-arg ref="crafter.configurationResolver"/>
+                <constructor-arg name="configurationResolver" ref="crafter.configurationResolver"/>
             </bean>
         </constructor-arg>
-		<constructor-arg ref="configurationProvider"/>
+		<constructor-arg name="configurationProvider" ref="configurationProvider"/>
     </bean>
 
     <bean id="webDavProfileLoader" class="org.craftercms.deployer.utils.config.profiles.ConfigurationProfileLoaderImpl">
-		<constructor-arg value="${target.config.profiles.webdav.module}"/>
-		<constructor-arg value="${target.config.profiles.webdav.path}"/>
-        <constructor-arg>
+		<constructor-arg name="profilesModule" value="${target.config.profiles.webdav.module}"/>
+		<constructor-arg name="profilesUrl" value="${target.config.profiles.webdav.path}"/>
+        <constructor-arg name="profileMapper">
             <bean class="org.craftercms.commons.config.profiles.webdav.WebDavProfileMapper">
-                <constructor-arg ref="crafter.configurationResolver"/>
+                <constructor-arg name="configurationResolver" ref="crafter.configurationResolver"/>
             </bean>
         </constructor-arg>
-		<constructor-arg ref="configurationProvider"/>
+		<constructor-arg name="configurationProvider" ref="configurationProvider"/>
     </bean>
 
     <!-- Core -->
@@ -267,6 +257,7 @@
         <property name="includeElementXPathQuery" value="${target.search.indexing.xml.flattening.includeElementXPathQuery}"/>
         <property name="removeIncludeElement" value="${target.search.indexing.xml.flattening.removeIncludeTags}"/>
         <property name="disabledIncludeNodeXPathQuery" value="${target.search.indexing.xml.flattening.disabledIncludeNodeXPathQuery}"/>
+        <property name="localeCodeXPathQuery" value="${target.search.indexing.xml.locale.xpath}"/>
         <property name="pagesPathPattern" value="${target.search.indexing.xml.flattening.pagesPathPattern}"/>
         <property name="includedItemsProcessor" ref="includeDescriptorsProcessor"/>
         <property name="contentStoreService" ref="crafter.contentStoreService"/>
@@ -274,8 +265,8 @@
 
     <bean id="inheritedDescriptorsItemProcessor" 
           class="org.craftercms.core.processors.impl.InheritedDescriptorsItemProcessor">
-        <constructor-arg value="${target.search.indexing.xml.merging.inherits.field}"/>
-        <constructor-arg ref="crafter.mergeStrategyResolverChain"/>
+        <constructor-arg name="inheritsFromElementName" value="${target.search.indexing.xml.merging.inherits.field}"/>
+        <constructor-arg name="mergeStrategyResolver" ref="crafter.mergeStrategyResolverChain"/>
     </bean>
 
     <bean id="disableAwareIncludeDescriptorsProcessor" class="org.craftercms.commons.spring.ConditionalFactoryBean">
@@ -294,20 +285,10 @@
         <property name="itemProcessors" ref="itemProcessors"/>
     </bean>
 
-    <bean id="xmlFileBatchIndexer" class="org.craftercms.search.batch.impl.XmlFileBatchIndexer"
-          parent="abstractXmlFileBatchIndexer">
-        <property name="searchService" ref="searchService"/>
-    </bean>
-
     <bean id="abstractBinaryFileBatchIndexer" abstract="true">
         <property name="supportedMimeTypes"
                   value="#{environment.getProperty('target.search.indexing.binary.supportedMimeTypes', T(java.util.List))}"/>
         <property name="maxFileSize" value="${target.search.indexing.binary.maxFileSize}"/>
-    </bean>
-
-    <bean id="binaryFileBatchIndexer" class="org.craftercms.search.batch.impl.BinaryFileBatchIndexer"
-          parent="abstractBinaryFileBatchIndexer">
-        <property name="searchService" ref="searchService"/>
     </bean>
 
     <bean id="abstractBinaryFileWithMetadataBatchIndexer" abstract="true">
@@ -324,27 +305,6 @@
         <property name="remoteFileResolver" ref="remoteFileResolver"/>
         <property name="itemProcessors" ref="itemProcessors"/>
         <property name="maxFileSize" value="${target.search.indexing.binary.maxFileSize}"/>
-    </bean>
-
-    <bean id="binaryFileWithMetadataBatchIndexer" parent="abstractBinaryFileWithMetadataBatchIndexer"
-          class="org.craftercms.search.batch.impl.BinaryFileWithMetadataBatchIndexer">
-        <property name="searchService" ref="searchService"/>
-    </bean>
-
-    <bean id="abstractAccessTokenAware" abstract="true">
-        <property name="accessTokenParameter" value="${target.search.accessToken.parameter}"/>
-        <property name="accessTokenValue" value="${target.search.accessToken.value}"/>
-    </bean>
-
-    <bean id="searchService" parent="abstractAccessTokenAware"
-          class="org.craftercms.search.service.impl.v2.SolrRestClientSearchService">
-        <property name="serverUrl" value="${target.search.serverUrl}"/>
-    </bean>
-
-    <bean id="searchAdminService"  parent="abstractAccessTokenAware"
-          class="org.craftercms.search.service.impl.v2.RestClientAdminService">
-        <property name="serverUrl" value="${target.search.serverUrl}"/>
-        <property name="restTemplate" ref="restTemplate"/>
     </bean>
 
     <!-- Mail -->
@@ -379,9 +339,9 @@
 
     <bean id="s3SyncProcessor" class="org.craftercms.deployer.impl.processors.aws.S3SyncProcessor"
           parent="deploymentProcessor">
-        <constructor-arg ref="s3ExecutorService"/>
-        <constructor-arg value="${target.localRepoPath}"/>
-        <constructor-arg value="${deployer.main.targets.config.blob.file.extension}"/>
+        <constructor-arg name="threadPoolTaskExecutor" ref="s3ExecutorService"/>
+        <constructor-arg name="localRepoUrl" value="${target.localRepoPath}"/>
+        <constructor-arg name="blobExtension" value="${deployer.main.targets.config.blob.file.extension}"/>
     </bean>
 
     <bean id="cloudfrontInvalidationProcessor" parent="deploymentProcessor"
@@ -395,34 +355,49 @@
     <bean id="fileBasedDeploymentEventProcessor"
           class="org.craftercms.deployer.impl.processors.FileBasedDeploymentEventProcessor"
           parent="deploymentProcessor">
-        <constructor-arg ref="deploymentEventsStore"/>
+        <constructor-arg name="store" ref="deploymentEventsStore"/>
     </bean>
 
     <bean id="s3DeploymentEventsProcessor" parent="deploymentProcessor"
           class="org.craftercms.deployer.impl.processors.aws.S3DeploymentEventsProcessor">
-        <constructor-arg ref="s3ExecutorService"/>
-        <constructor-arg ref="deploymentEventsStore"/>
+        <constructor-arg name="threadPoolTaskExecutor" ref="s3ExecutorService"/>
+        <constructor-arg name="store" ref="deploymentEventsStore"/>
     </bean>
 
     <bean id="delayProcessor" parent="deploymentProcessor"
           class="org.craftercms.deployer.impl.processors.DelayProcessor"/>
 
+    <!-- Locale -->
+    <bean id="descriptorLocaleExtractor" class="org.craftercms.search.locale.impl.DescriptorLocaleExtractor">
+        <constructor-arg name="contentStoreService" ref="crafter.contentStoreService"/>
+        <constructor-arg name="localeXPath" value="${target.search.indexing.xml.locale.xpath}"/>
+    </bean>
+
     <!-- Elasticsearch -->
-    <bean id="elasticsearchConfig" class="org.craftercms.deployer.utils.elasticsearch.ElasticsearchConfig">
-        <constructor-arg ref="targetConfig"/>
+
+    <!-- Deprecated client, in process to be removed -->
+    <bean id="elasticsearchConfig" class="org.craftercms.deployer.utils.elasticsearch.legacy.ElasticsearchConfig">
+        <constructor-arg name="config" ref="targetConfig"/>
+    </bean>
+
+    <bean id="elasticsearchAdminService"
+          class="org.craftercms.deployer.utils.elasticsearch.legacy.ElasticsearchAdminServiceFactory">
+        <constructor-arg name="config" ref="elasticsearchConfig"/>
+        <constructor-arg name="authoringMapping" value="${target.search.elasticsearch.mappings.authoring}"/>
+        <constructor-arg name="previewMapping" value="${target.search.elasticsearch.mappings.preview}"/>
+        <constructor-arg name="authoringNamePattern" value="${target.search.elasticsearch.authoring.pattern}"/>
+    </bean>
+
+    <bean id="elasticsearchClientConfig" class="org.craftercms.deployer.utils.elasticsearch.ElasticsearchConfig">
+        <constructor-arg name="config" ref="targetConfig"/>
     </bean>
 
     <bean id="tika" class="org.apache.tika.Tika"/>
 
-    <bean id="elasticsearchAdminService"
-          class="org.craftercms.deployer.utils.elasticsearch.ElasticsearchAdminServiceFactory">
-        <constructor-arg ref="elasticsearchConfig"/>
-        <constructor-arg value="${target.search.elasticsearch.mapping.authoring}"/>
-        <constructor-arg value="${target.search.elasticsearch.mapping.preview}"/>
-    </bean>
-
     <bean id="tokenizedElementParser"
           class="org.craftercms.search.commons.service.impl.TokenizedElementParser"/>
+
+    <bean id="itemListElementParser" class="org.craftercms.search.elasticsearch.impl.ItemListElementParser"/>
 
     <bean id="htmlStrippingConverter"
           class="org.craftercms.search.commons.service.impl.HtmlStrippingConverter"/>
@@ -455,6 +430,7 @@
     <bean id="elementParserService" class="org.craftercms.search.commons.service.impl.ElementParserServiceImpl">
         <property name="parsers">
             <list>
+                <ref bean="itemListElementParser"/>
                 <ref bean="tokenizedElementParser"/>
                 <ref bean="elementParser"/>
             </list>
@@ -492,14 +468,17 @@
     </bean>
 
     <bean id="elasticsearchService" class="org.craftercms.deployer.utils.elasticsearch.ElasticsearchServiceFactory">
-        <constructor-arg ref="elasticsearchConfig"/>
-        <constructor-arg ref="elasticsearchDocumentBuilder"/>
-        <constructor-arg ref="tikaDocumentParser"/>
+        <constructor-arg name="config" ref="elasticsearchClientConfig"/>
+        <constructor-arg name="documentBuilder" ref="elasticsearchDocumentBuilder"/>
+        <constructor-arg name="documentParser" ref="tikaDocumentParser"/>
     </bean>
 
     <bean id="elasticsearchXmlFileBatchIndexer" parent="abstractXmlFileBatchIndexer"
           class="org.craftercms.search.elasticsearch.batch.ElasticsearchXmlFileBatchIndexer">
-        <property name="elasticsearchService" ref="elasticsearchService"/>
+        <constructor-arg name="elasticsearchAdminService" ref="elasticsearchAdminService"/>
+        <constructor-arg name="localeExtractor" ref="descriptorLocaleExtractor"/>
+        <constructor-arg name="elasticsearchService" ref="elasticsearchService"/>
+        <constructor-arg name="enableTranslation" value="${target.translation.enable}"/>
     </bean>
 
     <bean id="elasticsearchBinaryFileBatchIndexer" parent="abstractBinaryFileBatchIndexer"
@@ -517,7 +496,7 @@
             <map>
                 <entry key="author" value="#{T(org.apache.tika.metadata.TikaCoreProperties).CREATOR}"/>
                 <entry key="title" value="#{T(org.apache.tika.metadata.TikaCoreProperties).TITLE}"/>
-                <entry key="keywords" value="#{T(org.apache.tika.metadata.TikaCoreProperties).KEYWORDS}"/>
+                <entry key="keywords" value="#{T(org.apache.tika.metadata.Office).KEYWORDS}"/>
                 <entry key="description" value="#{T(org.apache.tika.metadata.TikaCoreProperties).DESCRIPTION}"/>
                 <entry key="contentType" value="#{T(org.apache.tika.metadata.HttpHeaders).CONTENT_TYPE}"/>
                 <entry key="contentLength" value="#{T(org.apache.tika.metadata.HttpHeaders).CONTENT_LENGTH}"/>
@@ -549,8 +528,8 @@
 
     <bean id="elasticsearchIndexingProcessor" parent="abstractSearchIndexingProcessor"
           class="org.craftercms.deployer.impl.processors.elasticsearch.ElasticsearchIndexingProcessor">
-        <constructor-arg ref="elasticsearchService"/>
-        <constructor-arg ref="elasticsearchAdminService"/>
+        <constructor-arg name="elasticsearchService" ref="elasticsearchService"/>
+        <constructor-arg name="elasticsearchAdminService" ref="elasticsearchAdminService"/>
         <property name="batchIndexers">
             <list>
                 <ref bean="elasticsearchXmlFileBatchIndexer"/>
@@ -562,7 +541,9 @@
 
     <bean id="authoringElasticsearchXmlFileBatchIndexer" parent="abstractXmlFileBatchIndexer"
           class="org.craftercms.search.elasticsearch.batch.ElasticsearchXmlFileBatchIndexer">
-        <property name="elasticsearchService" ref="elasticsearchService"/>
+        <constructor-arg name="elasticsearchAdminService" ref="elasticsearchAdminService"/>
+        <constructor-arg name="elasticsearchService" ref="elasticsearchService"/>
+        <constructor-arg name="enableTranslation" value="${target.translation.enable}"/>
         <property name="metadataExtractors" ref="authoringMetadataExtractors"/>
     </bean>
 
@@ -581,7 +562,7 @@
         <property name="metadataExtractors" ref="authoringMetadataExtractors"/>
     </bean>
 
-    <bean id="contentTypeMetadataExtractor" class="org.craftercms.search.metadata.impl.ContentTypeMetadadataExtractor">
+    <bean id="contentTypeMetadataExtractor" class="org.craftercms.search.metadata.impl.ContentTypeMetadataExtractor">
         <property name="fieldXpath" value="${target.search.indexing.binary.authoring.contentType.xpath}"/>
         <property name="includePatterns"
                   value="#{environment.getProperty('target.search.indexing.binary.authoring.metadataPathPatterns', T(java.util.List))}"/>

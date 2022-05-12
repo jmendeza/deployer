@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+  ~ Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License version 3 as published by
@@ -18,10 +18,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-
-	<groupId>org.craftercms</groupId>
 	<artifactId>crafter-deployer</artifactId>
-	<version>3.1.23</version><!-- craftercms version flag -->
 	<packaging>jar</packaging>
 
 	<name>Crafter Deployer</name>
@@ -34,55 +31,11 @@
 	</scm>
 
 	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.2.13.RELEASE</version>
+		<groupId>org.craftercms</groupId>
+		<artifactId>craftercms-spring-boot</artifactId>
+		<version>4.0.0</version><!-- craftercms version flag -->
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-
-	<properties>
-		<!-- Version Numbers -->
-		<commons.configuration.version>2.7</commons.configuration.version>
-		<commons.csv.version>1.5</commons.csv.version>
-		<jgit.version>5.13.0.202109080827-r</jgit.version>
-		<javax.mail.version>1.6.2</javax.mail.version>
-		<handlebars.version>4.1.2</handlebars.version>
-		<sardine.version>5.10</sardine.version>
-		<xerces.version>2.12.2</xerces.version>
-		<script.security.version>1.72.9</script.security.version>
-		<java.version>1.8</java.version>
-		<!-- Override property setup by Spring Boot Parent -->
-		<jackson.version>2.13.1</jackson.version>
-		<jackson.databind.version>2.13.2.2</jackson.databind.version>
-		<aws.version>1.12.139</aws.version>
-		<box.sdk.version>2.58.0</box.sdk.version>
-		<elasticsearch.version>6.6.1</elasticsearch.version>
-		<tomcat.version>9.0.45</tomcat.version>
-		<groovy.version>2.4.19</groovy.version>
-		<apache.ivy>2.4.0</apache.ivy>
-		<httpclient.version>4.5.13</httpclient.version>
-		<log4j2.version>2.17.1</log4j2.version>
-		<bouncycastle.version>1.61</bouncycastle.version>
-		<ehcache.version>2.10.9.2</ehcache.version>
-        	<jdom2.version>2.0.6.1</jdom2.version>
-		<gson.version>2.8.9</gson.version>
-
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-	</properties>
-
-	<repositories>
-		<repository>
-			<id>sonatype-snapshots</id>
-			<name>Sonatype Snapshots</name>
-			<url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-			<releases>
-				<enabled>true</enabled>
-				<updatePolicy>always</updatePolicy>
-				<checksumPolicy>warn</checksumPolicy>
-			</releases>
-		</repository>
-	</repositories>
 
 	<dependencies>
 		<!-- Crafter -->
@@ -113,21 +66,11 @@
 		</dependency>
 		<dependency>
 			<groupId>org.craftercms</groupId>
-			<artifactId>crafter-search-solr-client</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.craftercms</groupId>
-			<artifactId>crafter-search-solr-api</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.craftercms</groupId>
 			<artifactId>crafter-commons-upgrade-manager</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 
-		<!-- Commmons -->
+		<!-- Commons -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-configuration2</artifactId>
@@ -167,6 +110,19 @@
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 			<version>${jackson.databind.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-xml</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+
+		<!-- JSON-P -->
+		<dependency>
+			<groupId>org.glassfish</groupId>
+			<artifactId>jakarta.json</artifactId>
+			<version>${jakarta.json.version}</version>
 		</dependency>
 
 		<!-- Git -->
@@ -254,6 +210,7 @@
 			<groupId>org.codehaus.groovy</groupId>
 			<artifactId>groovy-all</artifactId>
 			<version>${groovy.version}</version>
+			<type>pom</type>
 		</dependency>
 
 		<dependency>
@@ -274,37 +231,7 @@
 			<version>${script.security.version}</version>
 		</dependency>
 
-        	<dependency>
-                	<groupId>net.sf.ehcache</groupId>
-	                <artifactId>ehcache</artifactId>
-        	        <version>${ehcache.version}</version>
-	        </dependency>
-
-	        <dependency>
-	                <groupId>com.google.code.gson</groupId>
-	                <artifactId>gson</artifactId>
-	                <version>${gson.version}</version>
-	        </dependency>
-
-	        <dependency>
-	                <groupId>org.jdom</groupId>
-	                <artifactId>jdom2</artifactId>
-	                <version>${jdom2.version}</version>
-	        </dependency>
 	</dependencies>
-
-	<dependencyManagement>
-		<dependencies>
-			<!-- AWS SDK -->
-			<dependency>
-				<groupId>com.amazonaws</groupId>
-				<artifactId>aws-java-sdk-bom</artifactId>
-				<version>${aws.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 
 	<build>
 		<finalName>crafter-deployer</finalName>
@@ -328,7 +255,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.4</version>
+				<version>${maven.jar.version}</version>
 				<configuration>
 					<archive>
 						<manifest>
@@ -342,35 +269,9 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>2.2.1</version>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.9</version>
-				<executions>
-					<execution>
-						<id>attach-javadocs</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>buildnumber-maven-plugin</artifactId>
-				<version>1.2</version>
+				<version>${buildnumber.maven.version}</version>
 				<executions>
 					<execution>
 						<phase>validate</phase>
@@ -405,78 +306,29 @@
 		</plugins>
 	</build>
 
-
-	<profiles>
-
-		<profile>
-			<id>release-sign-artifacts</id>
-			<activation>
-				<property>
-					<name>performRelease</name>
-					<value>true</value>
-				</property>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-deploy-plugin</artifactId>
-						<version>2.7</version>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-gpg-plugin</artifactId>
-						<version>1.4</version>
-						<executions>
-							<execution>
-								<id>sign-artifacts</id>
-								<phase>verify</phase>
-								<goals>
-									<goal>sign</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<profile>
-			<id>JDK8</id>
-			<activation>
-				<jdk>[1.8,)</jdk>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-javadoc-plugin</artifactId>
-						<version>2.10.4</version>
-						<executions>
-							<execution>
-								<id>attach-javadocs</id>
-								<goals>
-									<goal>jar</goal>
-								</goals>
-								<configuration>
-									<additionalparam>-Xdoclint:none</additionalparam>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-
-	</profiles>
-
+	<repositories>
+		<repository>
+			<id>sonatype-snapshots</id>
+			<name>Sonatype Snapshot Repository</name>
+			<url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+				<checksumPolicy>fail</checksumPolicy>
+			</snapshots>
+		</repository>
+	</repositories>
 
 	<distributionManagement>
 		<snapshotRepository>
-			<id>sonatype-nexus-snapshots</id>
+			<id>sonatype-snapshots</id>
 			<url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
 		</snapshotRepository>
 		<repository>
-			<id>sonatype-nexus-staging</id>
+			<id>sonatype-staging</id>
 			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>

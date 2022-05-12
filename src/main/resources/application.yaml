@@ -16,6 +16,8 @@ spring:
   main:
     # Bean overriding became `false` by default in Spring Boot 2.1.0+
     allow-bean-definition-overriding: true
+    # Circular references became `false` by default in Spring Boot 2.6.0
+    allow-circular-references: true
   freemarker:
     # If Spring should check it's default template location (always false since we handle our own Freemarker templates)
     checkTemplateLocation: false
@@ -121,12 +123,16 @@ deployer:
       # Engine management authorization token
       # Please update this per installation and provide this token to the status monitors.
       engineAuthorizationToken: defaultManagementToken
+      studioAuthorizationToken: defaultManagementToken
     security:
       encryption:
         # The key used for encryption of configuration properties
-        key: default_encryption_key
+        key: zEtRii1jWUuUUB0W
         # The salt used for encryption of configuration properties
-        salt: default_encryption_salt
+        salt: DgGN9xhq3GOn6zxg
+      ssh:
+        # The path of the folder used for the SSH configuration
+        config: ./ssh
     upgrade:
       configuration: 'classpath:upgrade/pipelines.yaml'
       pipelines:

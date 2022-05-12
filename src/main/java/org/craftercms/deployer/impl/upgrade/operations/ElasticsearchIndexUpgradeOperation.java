@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -17,6 +17,7 @@
 package org.craftercms.deployer.impl.upgrade.operations;
 
 import org.apache.commons.configuration2.HierarchicalConfiguration;
+import org.craftercms.commons.upgrade.impl.UpgradeContext;
 import org.craftercms.commons.upgrade.impl.operations.AbstractUpgradeOperation;
 import org.craftercms.deployer.api.Target;
 import org.craftercms.search.elasticsearch.ElasticsearchAdminService;
@@ -42,12 +43,9 @@ public class ElasticsearchIndexUpgradeOperation extends AbstractUpgradeOperation
     }
 
     @Override
-    protected void doExecute(Target target) throws Exception {
-        HierarchicalConfiguration<?> config = target.getConfiguration();
-        if (target.isCrafterSearchEnabled() || !containsProcessor(config)) {
-            logger.info("Target {} does not use Elasticsearch so will be skipped", target.getId());
-            return;
-        }
+    protected void doExecute(UpgradeContext<Target> context) throws Exception {
+        var target = context.getTarget();
+        var config = target.getConfiguration();
 
         ElasticsearchAdminService adminService =
                 target.getApplicationContext().getBean(ElasticsearchAdminService.class);
@@ -56,7 +54,7 @@ public class ElasticsearchIndexUpgradeOperation extends AbstractUpgradeOperation
         String aliasName = String.format(indexIdFormat, siteName);
 
         adminService.waitUntilReady();
-        adminService.recreateIndex(aliasName, target.isEnvAuthoring());
+        adminService.recreateIndex(aliasName);
     }
 
 }

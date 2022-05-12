@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -28,6 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+
+import java.beans.ConstructorProperties;
 
 import static org.craftercms.commons.config.ConfigUtils.getRequiredStringProperty;
 
@@ -68,6 +70,7 @@ public class ScriptProcessor extends AbstractMainDeploymentProcessor implements 
      */
     protected String scriptPath;
 
+    @ConstructorProperties({"scriptEngine", "sandboxInterceptor"})
     public ScriptProcessor(GroovyScriptEngine scriptEngine, SandboxInterceptor sandboxInterceptor) {
         this.scriptEngine = scriptEngine;
         this.sandboxInterceptor = sandboxInterceptor;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -37,7 +37,6 @@ import org.craftercms.search.elasticsearch.ElasticsearchAdminService;
 import org.craftercms.deployer.api.DeploymentPipeline;
 import org.craftercms.deployer.api.Target;
 import org.craftercms.deployer.api.exceptions.DeployerException;
-import org.craftercms.search.service.AdminService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -69,9 +68,19 @@ public class TargetServiceImplTest {
     public void setUp() throws Exception {
         targetsFolder = createTargetsFolder();
 
+        DeploymentPipelineFactory deploymentPipelineFactory = createDeploymentPipelineFactory();
+        TaskScheduler taskScheduler = createTaskScheduler();
+        ExecutorService taskExecutor = createTaskExecutor();
+        ProcessedCommitsStore processedCommitsStore = createProcessedCommitsStore();
+        TargetLifecycleHooksResolver targetLifecycleHooksResolver = createTargetLifecycleHooksResolver();
+
         DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
         factory.registerSingleton("elasticsearchAdminService", mock(ElasticsearchAdminService.class));
-        factory.registerSingleton("adminService", mock(AdminService.class));
+        factory.registerSingleton("deploymentPipelineFactory", deploymentPipelineFactory);
+        factory.registerSingleton("taskScheduler", taskScheduler);
+        factory.registerSingleton("taskExecutor", taskExecutor);
+        factory.registerSingleton("processedCommitsStore", processedCommitsStore);
+        factory.registerSingleton("targetLifecycleHooksResolver", targetLifecycleHooksResolver);
 
         GenericApplicationContext context = new GenericApplicationContext(factory);
         XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(context);
@@ -87,11 +96,11 @@ public class TargetServiceImplTest {
             "test",
             createHandlebars(),
             context,
-            createDeploymentPipelineFactory(),
-            createTaskScheduler(),
-            createTaskExecutor(),
-            createProcessedCommitsStore(),
-            createTargetLifecycleHooksResolver(),
+            deploymentPipelineFactory,
+            taskScheduler,
+            taskExecutor,
+            processedCommitsStore,
+            targetLifecycleHooksResolver,
             createConfigurationReader(),
             createUpgradeManager());
     }
@@ -207,7 +216,7 @@ public class TargetServiceImplTest {
         String randomParam = RandomStringUtils.randomAlphanumeric(8);
         Map<String, Object> params = Collections.singletonMap("random_param", randomParam);
 
-        Target target = targetService.createTarget(env, siteName, true, "test", true, params);
+        Target target = targetService.createTarget(env, siteName, true, "test", params);
 
         assertNotNull(target);
         assertEquals(env, target.getConfiguration().getString(DeploymentConstants.TARGET_ENV_CONFIG_KEY));
@@ -272,7 +281,8 @@ public class TargetServiceImplTest {
         return new EncryptionAwareConfigurationReader(new NoOpTextEncryptor());
     }
 
-    private UpgradeManager createUpgradeManager() {
+    @SuppressWarnings("unchecked")
+    private UpgradeManager<Target> createUpgradeManager() {
         return mock(UpgradeManager.class);
     }
 

@@ -1,8 +1,7 @@
-version: '1.7'
+version: '2.3'
 target:
   env: {{env}}
   siteName: {{site_name}}
-  crafterSearchEnabled: {{#if use_crafter_search}}{{use_crafter_search}}{{else}}false{{/if}}
   lifecycleHooks:
     delete:
       - hookName: deleteLocalRepoFolderLifecycleHook
@@ -31,7 +30,8 @@ target:
               {{/if}}
           {{/if}}
       - processorName: gitDiffProcessor
-      - processorName: {{#if use_crafter_search}}searchIndexingProcessor{{else}}elasticsearchIndexingProcessor{{/if}}
+      - processorName: elasticsearchIndexingProcessor
+        excludeFiles: ['^/sources/.*$']
       - processorName: httpMethodCallProcessor
         includeFiles: ["^/?config/.*$", "^/?scripts/.*$"]
         excludeFiles: ["^/?config/studio/content-types.*$"]

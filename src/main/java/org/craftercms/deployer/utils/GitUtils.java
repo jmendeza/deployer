@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -45,7 +45,9 @@ import static org.eclipse.jgit.lib.Constants.HEAD;
  *
  * @author avasquez
  */
-public abstract class GitUtils {
+public abstract class GitUtils extends org.craftercms.commons.git.utils.GitUtils {
+
+    private static final Logger logger = LoggerFactory.getLogger(GitUtils.class);
 
     private static final Logger logger = LoggerFactory.getLogger(GitUtils.class);
 

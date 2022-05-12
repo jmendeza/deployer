@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -30,7 +30,7 @@ import static org.craftercms.deployer.impl.DeploymentConstants.PROCESSOR_NAME_CO
  * @author joseross
  * @since 3.1.8
  */
-public class ReplaceProcessorUpgradeOperation extends AbstractTargetUpgradeOperation {
+public class ReplaceProcessorUpgradeOperation extends AbstractProcessorUpgradeOperation {
 
     public static final String CONFIG_KEY_CONDITIONS = "conditions";
 
@@ -77,7 +77,7 @@ public class ReplaceProcessorUpgradeOperation extends AbstractTargetUpgradeOpera
     }
 
     @Override
-    protected void doExecute(Target target, Map<String, Object> targetConfig) {
+    protected void doExecuteInternal(Target target, Map<String, Object> targetConfig) {
         List<Map<String, Object>> pipelineObj = getPipeline(targetConfig);
         for(Map<String, Object> processorObj : pipelineObj) {
             if (matchesAllConditions(processorObj)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -43,5 +43,12 @@ public interface DeploymentProcessor extends InitializableByConfigBean {
      * @param deployment    the current deployment info
      */
     void execute(Deployment deployment);
+
+    /**
+     * Indicates if the processor should be included in the given deployment mode
+     * @param mode the deployment mode to check
+     * @return true if the processor should be included
+     */
+    boolean supportsMode(Deployment.Mode mode);
 
 }

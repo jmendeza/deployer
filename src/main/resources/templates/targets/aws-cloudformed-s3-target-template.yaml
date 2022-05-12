@@ -1,4 +1,4 @@
-version: '1.7'
+version: '2.3'
 aws:
   region: {{#if aws.region}}{{aws.region}}{{else}}''{{/if}}
   accessKey: {{#if aws.default_access_key}}{{aws.default_access_key}}{{else}}''{{/if}}
@@ -125,6 +125,7 @@ target:
         secretKey: ${aws.secretKey}
         url: ${aws.cloudformation.s3Url}
       - processorName: elasticsearchIndexingProcessor
+        excludeFiles: ['^/sources/.*$']       
       # -------------------- END OF MAIN PIPELINE --------------------
       - processorName: fileOutputProcessor
       {{#if notification_addresses}}

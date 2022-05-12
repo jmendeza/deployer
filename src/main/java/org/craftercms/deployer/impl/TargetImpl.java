@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -30,6 +30,8 @@ import org.craftercms.deployer.utils.GitUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
@@ -58,24 +60,24 @@ public class TargetImpl implements Target {
 
     public static final String TARGET_ID_FORMAT = "%s-%s";
 
-    protected ZonedDateTime loadDate;
-    protected String env;
-    protected String siteName;
-    protected File configurationFile;
-    protected HierarchicalConfiguration<ImmutableNode> configuration;
-    protected ConfigurableApplicationContext applicationContext;
-    protected ExecutorService executor;
-    protected TaskScheduler scheduler;
-    protected TargetLifecycleHooksResolver targetLifecycleHooksResolver;
-    protected DeploymentPipelineFactory deploymentPipelineFactory;
-    protected boolean crafterSearchEnabled;
+    protected final ZonedDateTime loadDate;
+    protected final String env;
+    protected final String siteName;
+    protected final String localRepoPath;
+    protected final File configurationFile;
+    protected final HierarchicalConfiguration<ImmutableNode> configuration;
+    protected final ConfigurableApplicationContext applicationContext;
+    protected final ExecutorService executor;
+    protected final TaskScheduler scheduler;
+    protected final TargetLifecycleHooksResolver targetLifecycleHooksResolver;
+    protected final DeploymentPipelineFactory deploymentPipelineFactory;
 
     protected volatile Status status;
     protected DeploymentPipeline deploymentPipeline;
     protected ScheduledFuture<?> scheduledDeploymentFuture;
-    protected Queue<Deployment> pendingDeployments;
+    protected final Queue<Deployment> pendingDeployments;
     protected volatile Deployment currentDeployment;
-    protected Lock deploymentLock;
+    protected final Lock deploymentLock;
 
     public static void setCurrent(Target target) {
         threadLocal.set(target);
@@ -93,12 +95,18 @@ public class TargetImpl implements Target {
         return String.format(TARGET_ID_FORMAT, siteName, env);
     }
 
-    public TargetImpl(ZonedDateTime loadDate, String env, String siteName,
-                      File configurationFile, HierarchicalConfiguration<ImmutableNode> configuration,
-                      ConfigurableApplicationContext applicationContext, ExecutorService executor,
-                      TaskScheduler scheduler, TargetLifecycleHooksResolver targetLifecycleHooksResolver,
-                      DeploymentPipelineFactory deploymentPipelineFactory, boolean crafterSearchEnabled) {
-        this.loadDate = loadDate;
+    public TargetImpl(
+            @Value("${target.env}") String env,
+            @Value("${target.siteName}") String siteName,
+            @Value("${target.localRepoPath}") String localRepoPath,
+            @Value("${target.configFile}") File configurationFile,
+            @Autowired HierarchicalConfiguration<ImmutableNode> configuration,
+            @Autowired ConfigurableApplicationContext applicationContext,
+            @Autowired ExecutorService executor,
+            @Autowired TaskScheduler scheduler,
+            @Autowired TargetLifecycleHooksResolver targetLifecycleHooksResolver,
+            @Autowired DeploymentPipelineFactory deploymentPipelineFactory) {
+        this.loadDate = ZonedDateTime.now();
         this.env = env;
         this.siteName = siteName;
         this.configurationFile = configurationFile;
@@ -108,7 +116,6 @@ public class TargetImpl implements Target {
         this.scheduler = scheduler;
         this.targetLifecycleHooksResolver = targetLifecycleHooksResolver;
         this.deploymentPipelineFactory = deploymentPipelineFactory;
-        this.crafterSearchEnabled = crafterSearchEnabled;
         this.status = Status.CREATED;
         this.pendingDeployments = new ConcurrentLinkedQueue<>();
         this.deploymentLock = new ReentrantLock();
@@ -137,11 +144,6 @@ public class TargetImpl implements Target {
     @Override
     public Status getStatus() {
         return status;
-    }
-
-    @Override
-    public boolean isCrafterSearchEnabled() {
-        return crafterSearchEnabled;
     }
 
     @Override
@@ -239,11 +241,6 @@ public class TargetImpl implements Target {
         return deployments;
     }
 
-    @Override
-    public boolean isEnvAuthoring() {
-        return AUTHORING_ENV.equalsIgnoreCase(env);
-    }
-
     /**
      * {@inheritDoc}
      */
@@ -337,7 +334,7 @@ public class TargetImpl implements Target {
 
         try {
             logger.info("Unlocking repo for target {}", getId());
-            GitUtils.unlock(applicationContext.getEnvironment().getProperty(TARGET_LOCAL_REPO_CONFIG_KEY));
+            GitUtils.unlock(localRepoPath);
         } catch (Exception e) {
             logger.warn("Error unlocking repo for target {}", getId());
         }

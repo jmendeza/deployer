@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -192,6 +192,11 @@ public abstract class AbstractSearchIndexingProcessor extends AbstractMainDeploy
     @Override
     protected void doDestroy() throws DeployerException {
         // Do nothing
+    }
+
+    @Override
+    public boolean supportsMode(Deployment.Mode mode) {
+        return mode == Deployment.Mode.PUBLISH || mode == Deployment.Mode.SEARCH_INDEX;
     }
 
     @Override
