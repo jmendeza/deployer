@@ -132,12 +132,6 @@
 			<version>${jgit.version}</version>
 		</dependency>
 
-		<dependency>
-			<groupId>org.eclipse.jgit</groupId>
-			<artifactId>org.eclipse.jgit.ssh.jsch</artifactId>
-			<version>${jgit.version}</version>
-		</dependency>
-
 		<!-- Mail -->
 		<dependency>
                         <groupId>com.sun.mail</groupId>
@@ -181,23 +175,12 @@
 			<artifactId>box-java-sdk</artifactId>
 			<version>${box.sdk.version}</version>
 		</dependency>
-	
-		<dependency>
-			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcprov-jdk15on</artifactId>
-			<version>${bouncycastle.version}</version>
-		</dependency>
 
 		<!-- WebDAV -->
 		<dependency>
 			<groupId>com.github.lookfirst</groupId>
 			<artifactId>sardine</artifactId>
 			<version>${sardine.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpclient</artifactId>
 		</dependency>
 
 		<dependency>

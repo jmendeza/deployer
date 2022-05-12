@@ -22,8 +22,6 @@ import org.apache.commons.configuration2.HierarchicalConfiguration;
 
 import static org.craftercms.search.elasticsearch.spring.ElasticsearchClientFactory.createClient;
 
-import static org.craftercms.search.elasticsearch.spring.ElasticsearchClientFactory.createClient;
-
 /**
  * Holds the configuration for a single Elasticsearch cluster
  *

@@ -109,6 +109,7 @@ public class TargetImpl implements Target {
         this.loadDate = ZonedDateTime.now();
         this.env = env;
         this.siteName = siteName;
+        this.localRepoPath = localRepoPath;
         this.configurationFile = configurationFile;
         this.configuration = configuration;
         this.applicationContext = applicationContext;
@@ -250,7 +251,7 @@ public class TargetImpl implements Target {
 
         try {
             logger.info("Cleaning up repo for target {}", getId());
-            GitUtils.cleanup(applicationContext.getEnvironment().getProperty(TARGET_LOCAL_REPO_CONFIG_KEY));
+            GitUtils.cleanup(localRepoPath);
         } catch (Exception e) {
             logger.warn("Error cleaning up repo for target {}", getId());
         }

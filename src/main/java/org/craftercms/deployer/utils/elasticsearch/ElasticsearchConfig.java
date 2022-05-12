@@ -51,12 +51,6 @@ public class ElasticsearchConfig {
 
     public static final String CONFIG_KEY_VALUE = "value";
 
-    public static final String CONFIG_KEY_INDEX_SETTINGS = "target.search.elasticsearch.indexSettings";
-
-    public static final String CONFIG_KEY_KEY = "key";
-
-    public static final String CONFIG_KEY_VALUE = "value";
-
     /**
      * The global cluster, used for connecting to a single cluster for read & write operations
      */

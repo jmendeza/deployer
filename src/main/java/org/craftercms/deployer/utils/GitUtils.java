@@ -49,8 +49,6 @@ public abstract class GitUtils extends org.craftercms.commons.git.utils.GitUtils
 
     private static final Logger logger = LoggerFactory.getLogger(GitUtils.class);
 
-    private static final Logger logger = LoggerFactory.getLogger(GitUtils.class);
-
     public static final String GIT_FOLDER_NAME = ".git";
     public static final String GIT_INDEX_NAME = "index";
     public static final String GIT_LOCK_NAME = GIT_INDEX_NAME + ".lock";
