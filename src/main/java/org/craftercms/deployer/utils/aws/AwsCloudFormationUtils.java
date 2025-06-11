@@ -15,13 +15,13 @@
  */
 package org.craftercms.deployer.utils.aws;
 
-import com.amazonaws.services.cloudformation.AmazonCloudFormation;
-import com.amazonaws.services.cloudformation.AmazonCloudFormationClientBuilder;
-import com.amazonaws.services.cloudformation.model.DescribeStacksRequest;
-import com.amazonaws.services.cloudformation.model.DescribeStacksResult;
-import com.amazonaws.services.cloudformation.model.Stack;
 import org.apache.commons.collections.CollectionUtils;
 import org.craftercms.deployer.api.exceptions.DeployerException;
+import software.amazon.awssdk.services.cloudformation.CloudFormationClient;
+import software.amazon.awssdk.services.cloudformation.CloudFormationClientBuilder;
+import software.amazon.awssdk.services.cloudformation.model.DescribeStacksRequest;
+import software.amazon.awssdk.services.cloudformation.model.DescribeStacksResponse;
+import software.amazon.awssdk.services.cloudformation.model.Stack;
 
 import java.util.List;
 
@@ -32,64 +32,64 @@ import java.util.List;
  */
 public class AwsCloudFormationUtils {
 
-    private AwsCloudFormationUtils() {
-    }
+	private AwsCloudFormationUtils() {
+	}
 
-    /**
-     * Builds an {@code AmazonCloudFormation} client, using the provided {@link AwsClientBuilderConfigurer}.
-     *
-     * @param builderConfigurer the helper used to configure the {@code AmazonCloudFormationClientBuilder}
-     * @return the built {@code AmazonCloudFormation} client
-     */
-    public static AmazonCloudFormation buildClient(AwsClientBuilderConfigurer builderConfigurer) {
-        AmazonCloudFormationClientBuilder builder = AmazonCloudFormationClientBuilder.standard();
-        builderConfigurer.configureClientBuilder(builder);
+	/**
+	 * Builds an {@code AmazonCloudFormation} client, using the provided {@link AwsClientBuilderConfigurer}.
+	 *
+	 * @param builderConfigurer the helper used to configure the {@code AmazonCloudFormationClientBuilder}
+	 * @return the built {@code AmazonCloudFormation} client
+	 */
+	public static CloudFormationClient buildClient(AwsClientBuilderConfigurer builderConfigurer) {
+		CloudFormationClientBuilder builder = CloudFormationClient.builder();
+		builderConfigurer.configureClientBuilder(builder);
 
-        return builder.build();
-    }
+		return builder.build();
+	}
 
-    /**
-     * Returns true if the specified stack exists, false otherwise.
-     *
-     * @param cloudFormation the CloudFormation client
-     * @param stackName the stack name
-     *
-     * @return true if the specified stack exists, false otherwise.
-     * @throws DeployerException in an error occurs
-     */
-    public static boolean stackExists(AmazonCloudFormation cloudFormation, String stackName) throws DeployerException {
-        return getStack(cloudFormation, stackName) != null;
-    }
+	/**
+	 * Returns true if the specified stack exists, false otherwise.
+	 *
+	 * @param cloudFormation the CloudFormation client
+	 * @param stackName      the stack name
+	 * @return true if the specified stack exists, false otherwise.
+	 * @throws DeployerException in an error occurs
+	 */
+	public static boolean stackExists(CloudFormationClient cloudFormation, String stackName) throws DeployerException {
+		return getStack(cloudFormation, stackName) != null;
+	}
 
-    /**
-     * Returns the info of the specifed stack.
-     *
-     * @param cloudFormation the CloudFormation client
-     * @param stackName the stack name
-     *
-     * @return the info of the stack
-     * @throws DeployerException if an error occurs
-     */
-    public static Stack getStack(AmazonCloudFormation cloudFormation, String stackName) throws DeployerException {
-        try {
-            DescribeStacksRequest request = new DescribeStacksRequest().withStackName(stackName);
-            DescribeStacksResult result = cloudFormation.describeStacks(request);
-            List<Stack> stacks = result.getStacks();
+	/**
+	 * Returns the info of the specifed stack.
+	 *
+	 * @param cloudFormation the CloudFormation client
+	 * @param stackName      the stack name
+	 * @return the info of the stack
+	 * @throws DeployerException if an error occurs
+	 */
+	public static Stack getStack(CloudFormationClient cloudFormation, String stackName) throws DeployerException {
+		try {
+			DescribeStacksRequest request = DescribeStacksRequest.builder()
+				.stackName(stackName)
+				.build();
+			DescribeStacksResponse result = cloudFormation.describeStacks(request);
+			List<Stack> stacks = result.stacks();
 
-            if (CollectionUtils.isNotEmpty(stacks)) {
-                return stacks.get(0);
-            } else {
-                // Shouldn't happen, AWS throws an exception if stack doesn't exist
-                return null;
-            }
-        } catch (Exception e) {
-            // HORRIBLE, but only way to know if stack doesn't exist
-            if (e.getMessage().matches("(.*)" + stackName + "(.*)does not exist(.*)")) {
-                return null;
-            } else {
-                throw new DeployerException("Error while getting CloudFormation stack " + stackName, e);
-            }
-        }
-    }
+			if (CollectionUtils.isNotEmpty(stacks)) {
+				return stacks.get(0);
+			} else {
+				// Shouldn't happen, AWS throws an exception if stack doesn't exist
+				return null;
+			}
+		} catch (Exception e) {
+			// HORRIBLE, but only way to know if stack doesn't exist
+			if (e.getMessage().matches("(.*)" + stackName + "(.*)does not exist(.*)")) {
+				return null;
+			} else {
+				throw new DeployerException("Error while getting CloudFormation stack " + stackName, e);
+			}
+		}
+	}
 
 }

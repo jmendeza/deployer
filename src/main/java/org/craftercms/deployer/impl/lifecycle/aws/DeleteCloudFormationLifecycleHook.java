@@ -15,8 +15,6 @@
  */
 package org.craftercms.deployer.impl.lifecycle.aws;
 
-import com.amazonaws.services.cloudformation.AmazonCloudFormation;
-import com.amazonaws.services.cloudformation.model.*;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.lang3.ArrayUtils;
 import org.craftercms.commons.config.ConfigurationException;
@@ -26,6 +24,9 @@ import org.craftercms.deployer.api.lifecycle.TargetLifecycleHook;
 import org.craftercms.deployer.impl.lifecycle.AbstractLifecycleHook;
 import org.craftercms.deployer.utils.aws.AwsClientBuilderConfigurer;
 import org.craftercms.deployer.utils.aws.AwsCloudFormationUtils;
+import software.amazon.awssdk.services.cloudformation.CloudFormationClient;
+import software.amazon.awssdk.services.cloudformation.model.DeleteStackRequest;
+import software.amazon.awssdk.services.cloudformation.model.Stack;
 
 import static org.craftercms.commons.config.ConfigUtils.getRequiredStringProperty;
 
@@ -36,43 +37,43 @@ import static org.craftercms.commons.config.ConfigUtils.getRequiredStringPropert
  */
 public class DeleteCloudFormationLifecycleHook extends AbstractLifecycleHook {
 
-    protected static final String CONFIG_KEY_STACK_NAME = "stackName";
+	protected static final String CONFIG_KEY_STACK_NAME = "stackName";
 
-    protected static final String[] STACK_STATUS_CODES_DELETED = {
-            "DELETE_COMPLETE",
-            "DELETE_FAILED",
-            "DELETE_IN_PROGRESS"
-    };
+	protected static final String[] STACK_STATUS_CODES_DELETED = {
+		"DELETE_COMPLETE",
+		"DELETE_FAILED",
+		"DELETE_IN_PROGRESS"
+	};
 
-    // Config properties (populated on init)
+	// Config properties (populated on init)
 
-    protected AwsClientBuilderConfigurer builderConfigurer;
-    protected String stackName;
+	protected AwsClientBuilderConfigurer builderConfigurer;
+	protected String stackName;
 
-    @Override
-    public void doInit(Configuration config) throws ConfigurationException {
-        builderConfigurer = new AwsClientBuilderConfigurer(config);
-        stackName = getRequiredStringProperty(config, CONFIG_KEY_STACK_NAME);
-    }
+	@Override
+	public void doInit(Configuration config) throws ConfigurationException {
+		builderConfigurer = new AwsClientBuilderConfigurer(config);
+		stackName = getRequiredStringProperty(config, CONFIG_KEY_STACK_NAME);
+	}
 
-    @Override
-    public void doExecute(Target target) throws DeployerException {
-        AmazonCloudFormation cloudFormation = AwsCloudFormationUtils.buildClient(builderConfigurer);
-        Stack stack = AwsCloudFormationUtils.getStack(cloudFormation, stackName);
+	@Override
+	public void doExecute(Target target) throws DeployerException {
+		CloudFormationClient cloudFormation = AwsCloudFormationUtils.buildClient(builderConfigurer);
+		Stack stack = AwsCloudFormationUtils.getStack(cloudFormation, stackName);
 
-        if (stack != null && !ArrayUtils.contains(STACK_STATUS_CODES_DELETED, stack.getStackStatus())) {
-            logger.info("Deleting CloudFormation stack '{}'", stackName);
+		if (stack != null && !ArrayUtils.contains(STACK_STATUS_CODES_DELETED, stack.stackStatus())) {
+			logger.info("Deleting CloudFormation stack '{}'", stackName);
 
-            try {
-                cloudFormation.deleteStack(new DeleteStackRequest().withStackName(stackName));
+			try {
+				cloudFormation.deleteStack(DeleteStackRequest.builder().stackName(stackName).build());
 
-                logger.info("Deletion of CloudFormation stack '{}' started", stackName);
-            } catch (Exception e) {
-                throw new DeployerException("Error while deleting CloudFormation stack '" + stackName + "'", e);
-            }
-        } else {
-            logger.info("CloudFormation stack '{}' doesn't exist or has been deleted. Skipping delete...", stackName);
-        }
-    }
+				logger.info("Deletion of CloudFormation stack '{}' started", stackName);
+			} catch (Exception e) {
+				throw new DeployerException("Error while deleting CloudFormation stack '" + stackName + "'", e);
+			}
+		} else {
+			logger.info("CloudFormation stack '{}' doesn't exist or has been deleted. Skipping delete...", stackName);
+		}
+	}
 
 }

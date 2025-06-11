@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2023 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2024 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -15,14 +15,14 @@
  */
 package org.craftercms.deployer.impl.rest.model;
 
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import org.craftercms.commons.validation.annotations.param.EsapiValidatedParam;
-import org.craftercms.commons.validation.annotations.param.ValidateNoTagsParam;
-import org.craftercms.commons.validation.annotations.param.ValidateSecurePathParam;
+import org.craftercms.commons.validation.annotations.param.ValidSiteId;
 
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 
 import static org.craftercms.commons.validation.annotations.param.EsapiValidationType.SITE_ID;
 
@@ -31,43 +31,26 @@ import static org.craftercms.commons.validation.annotations.param.EsapiValidatio
  */
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class DuplicateTargetRequest {
-    @NotEmpty
-    @Size(max = 50)
-    @EsapiValidatedParam(type = SITE_ID)
-    private String sourceSiteName;
-    @NotEmpty
-    @Size(max = 50)
-    @EsapiValidatedParam(type = SITE_ID)
-    private String siteName;
-    @NotEmpty
-    @Size(max = 50)
-    @ValidateNoTagsParam
-    @ValidateSecurePathParam
-    @EsapiValidatedParam(type = SITE_ID, message = "Value is not a valid environment name")
-    private String env;
+	@NotEmpty
+	@ValidSiteId
+	private String siteName;
 
-    public String getSourceSiteName() {
-        return sourceSiteName;
-    }
+	public String getSiteName() {
+		return siteName;
+	}
 
-    public void setSourceSiteName(String sourceSiteName) {
-        this.sourceSiteName = sourceSiteName;
-    }
+	public void setSiteName(String siteName) {
+		this.siteName = siteName;
+	}
 
-    public String getSiteName() {
-        return siteName;
-    }
+	@JsonUnwrapped
+	private TargetTemplateParams targetTemplateParams;
 
-    public void setSiteName(String siteName) {
-        this.siteName = siteName;
-    }
+	public TargetTemplateParams getTargetTemplateParams() {
+		return targetTemplateParams;
+	}
 
-    public String getEnv() {
-        return env;
-    }
-
-    public void setEnv(String env) {
-        this.env = env;
-    }
-
+	public void setTargetTemplateParams(TargetTemplateParams targetTemplateParams) {
+		this.targetTemplateParams = targetTemplateParams;
+	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2024 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -25,6 +25,8 @@ import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.ObjectFactory;
 
+import java.util.Map;
+
 /**
  * Factory for a singleton Core {@link Context}. The context is created on the first {@link #getObject()} call, and
  * destroyed when the factory is destroyed.
@@ -37,68 +39,79 @@ import org.springframework.beans.factory.ObjectFactory;
  */
 public class SingletonContextFactory implements ObjectFactory<Context>, DisposableBean {
 
-    private static final Logger logger = LoggerFactory.getLogger(SingletonContextFactory.class);
+	private static final String SITE_NAME_CONFIG_VARIABLE = "siteName";
+	private static final String SITE_ID_CONFIG_VARIABLE = "siteId";
 
-    private String targetId;
-    private String localRepoUrl;
-    private ContentStoreService contentStoreService;
-    private boolean xmlMergingEnabled;
-    private boolean enableCache = false;
-    private int maxAllowedItemsInCache = 0;
+	private static final Logger logger = LoggerFactory.getLogger(SingletonContextFactory.class);
 
-    private Context context;
+	private String targetId;
+	private String siteName;
+	private String localRepoUrl;
+	private ContentStoreService contentStoreService;
+	private boolean xmlMergingEnabled;
+	private boolean enableCache = false;
+	private int maxAllowedItemsInCache = 0;
 
-    public void setTargetId(final String targetId) {
-        this.targetId = targetId;
-    }
+	private Context context;
 
-    public void setLocalRepoUrl(String localRepoUrl) {
-        this.localRepoUrl = localRepoUrl;
-    }
+	public void setTargetId(final String targetId) {
+		this.targetId = targetId;
+	}
 
-    public void setContentStoreService(ContentStoreService contentStoreService) {
-        this.contentStoreService = contentStoreService;
-    }
+	public void setSiteName(final String siteName) {
+		this.siteName = siteName;
+	}
 
-    public void setXmlMergingEnabled(boolean xmlMergingEnabled) {
-        this.xmlMergingEnabled = xmlMergingEnabled;
-    }
+	public void setLocalRepoUrl(String localRepoUrl) {
+		this.localRepoUrl = localRepoUrl;
+	}
 
-    public void setEnableCache(final boolean enableCache) {
-        this.enableCache = enableCache;
-    }
+	public void setContentStoreService(ContentStoreService contentStoreService) {
+		this.contentStoreService = contentStoreService;
+	}
 
-    public void setMaxAllowedItemsInCache(final int maxAllowedItemsInCache) {
-        this.maxAllowedItemsInCache = maxAllowedItemsInCache;
-    }
+	public void setXmlMergingEnabled(boolean xmlMergingEnabled) {
+		this.xmlMergingEnabled = xmlMergingEnabled;
+	}
 
-    @Override
-    public Context getObject() throws BeansException {
-        if (context == null) {
-            try {
-                context = contentStoreService.getContext(targetId, FileSystemContentStoreAdapter.STORE_TYPE,
-                    localRepoUrl, xmlMergingEnabled, enableCache, maxAllowedItemsInCache,
-                    Context.DEFAULT_IGNORE_HIDDEN_FILES);
+	public void setEnableCache(final boolean enableCache) {
+		this.enableCache = enableCache;
+	}
 
-                logger.debug("Content store context created: {}", context);
-            } catch (Exception e) {
-                throw new BeanCreationException("Unable to create context for content store @ " + localRepoUrl, e);
-            }
-        }
+	public void setMaxAllowedItemsInCache(final int maxAllowedItemsInCache) {
+		this.maxAllowedItemsInCache = maxAllowedItemsInCache;
+	}
 
-        return context;
-    }
+	@Override
+	public Context getObject() throws BeansException {
+		if (context == null) {
+			try {
+				Map<String, String> configVariables =
+					Map.of(SITE_NAME_CONFIG_VARIABLE, siteName,
+						SITE_ID_CONFIG_VARIABLE, siteName);
+				context = contentStoreService.getContext(targetId, FileSystemContentStoreAdapter.STORE_TYPE,
+					localRepoUrl, xmlMergingEnabled, enableCache, maxAllowedItemsInCache,
+					Context.DEFAULT_IGNORE_HIDDEN_FILES, configVariables);
 
-    public void destroy() {
-        if (context != null) {
-            try {
-                contentStoreService.destroyContext(context);
+				logger.debug("Content store context created: {}", context);
+			} catch (Exception e) {
+				throw new BeanCreationException("Unable to create context for content store @ " + localRepoUrl, e);
+			}
+		}
 
-                logger.debug("Content store context destroyed: {}", context);
-            } catch (Exception e) {
-                logger.warn("Unable to destroy context " + context, e);
-            }
-        }
-    }
+		return context;
+	}
+
+	public void destroy() {
+		if (context != null) {
+			try {
+				contentStoreService.destroyContext(context);
+
+				logger.debug("Content store context destroyed: {}", context);
+			} catch (Exception e) {
+				logger.warn("Unable to destroy context " + context, e);
+			}
+		}
+	}
 
 }
